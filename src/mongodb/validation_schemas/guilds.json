@@ -1,0 +1,18 @@
+{
+    "$jsonSchema": {
+        "bsonType": "object",
+        "title": "Guild-Drive association",
+        "required": [
+            "guildID",
+            "driveURL"
+        ],
+        "properties": {
+            "guildID": {
+                "bsonType": "string"
+            },
+            "driveURL": {
+                "bsonType": "string"
+            }
+        }
+    }
+}
