@@ -6,10 +6,7 @@ import {
   SlashCommandBuilder
 } from "discord.js";
 
-import {
-  joinVoiceChannel,
-  getVoiceConnections
-} from "@discordjs/voice";
+import { createVoiceConnection } from "../shared/voiceConnectionHandler";
 
 export const data = new SlashCommandBuilder()
   .setName("start")
@@ -20,11 +17,12 @@ export async function execute(interaction: CommandInteraction) {
   const target = interaction.options.getUser('target');
 
   const currVoiceChannel = interaction.member.voice.channel;
-  const connection = joinVoiceChannel({
+  const voiceConnection = createVoiceConnection({
     channelId: currVoiceChannel.id,
     guildId: currVoiceChannel.guild.id,
-    adapterCreator: currVoiceChannel.guild.voiceAdapterCreator,
+    adapterCreator: currVoiceChannel.guild.voiceAdapterCreator
   });
+
 
   // await interaction.guild.channels.cache.get(interaction.member.).join()
   // 	.then(async (connessione) => {
@@ -50,7 +48,7 @@ export async function execute(interaction: CommandInteraction) {
   const row = new ActionRowBuilder()
     .addComponents(test1, disconnectBtn);
 
-  await interaction.reply({
+  interaction.reply({
     // content: `Scegli un audio`,
     components: [row],
   });
