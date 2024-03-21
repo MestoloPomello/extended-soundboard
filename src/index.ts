@@ -2,31 +2,30 @@ import { Client } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
-import fs from "fs";
-import { saveAs } from "file-saver";
-import { join } from "node:path";
+import { listAudioFiles } from "./drive/fetchAudio";
 
 import {
+  AudioPlayerStatus,
   NoSubscriberBehavior,
-  StreamType,
-  VoiceConnection,
-  VoiceConnectionStatus,
   createAudioPlayer,
-  createAudioResource,
-  getVoiceConnection,
+  createAudioResource
 } from "@discordjs/voice";
-import { getExistingVoiceConnection } from "./shared/voiceConnectionHandler";
-import got from "got";
+import { createVoiceConnection, getExistingVoiceConnection } from "./shared/voiceConnectionHandler";
+
+
+export let audioFiles: { id: string; name: string; }[] = [];
+
 
 const client = new Client({
-  intents: ["Guilds", "GuildMessages", "DirectMessages"],
+  intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
 });
 
-client.once("ready", () => {
+client.once("ready", async () => {
   // TEST ONLY
   //deployCommands({ guildId: '379286033843617794' });  // server P A
   deployCommands({ guildId: "357575089799299072" }); // server Ismail
 
+  audioFiles = await listAudioFiles();
   console.log("Extended Soundboard ready.");
 });
 
@@ -35,9 +34,6 @@ client.on("guildCreate", async (guild) => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-  // if (!interaction.isCommand()) {
-  //   return;
-  // }
 
   // Commands handlers
   if (interaction.isCommand()) {
@@ -49,29 +45,19 @@ client.on("interactionCreate", async (interaction) => {
 
   // Button handlers
   if (interaction.isButton()) {
-    const voiceConnection = getExistingVoiceConnection();
-    if (!voiceConnection) {
-      interaction.reply("Devo essere in un canale.");
-      return;
-    }
+    const voiceConnection = getExistingVoiceConnection() || createVoiceConnection({
+      channelId: interaction.channelId,
+      guildId: interaction.guildId!,
+      adapterCreator: interaction.guild?.voiceAdapterCreator!
+    });
 
     if (interaction.customId == "disconnectBtn") {
       voiceConnection?.destroy();
       interaction.reply("Disconnesso dal canale.");
     } else {
-      // const track = interaction.customId;
-      // const volume = 100;
-
       try {
-        const fileID = "1PUXgOrp9ukhXbbRseZOLJ3RNcjJzgVxZ";
-        const testURL = `https://www.googleapis.com/drive/v3/files/${fileID}?key=${process.env.GOOGLE_API_KEY}&alt=media`;
-        const test = await fetch(`https://www.googleapis.com/drive/v3/files/${fileID}?key=${process.env.GOOGLE_API_KEY}&alt=media`, {
-          "method": "GET"
-        });
-
-        const resource = createAudioResource("./sample-3s.ogg");
-        
-        // console.log("resource before", resource);
+        const URL = `https://www.googleapis.com/drive/v3/files/${interaction.customId}?key=${process.env.GOOGLE_API_KEY}&alt=media`;
+        const resource = createAudioResource(URL);
 
         const player = createAudioPlayer({
           behaviors: {
@@ -79,15 +65,21 @@ client.on("interactionCreate", async (interaction) => {
           },
         });
 
-        const subscription = voiceConnection.subscribe(player);
-        // console.log("subscription", subscription);
-
+        voiceConnection?.subscribe(player);
         player.play(resource);
-        // console.log("resource after", resource);
 
-        player.on('error', error => {
-          console.error(`Error: ${error.message} with resource ${error.resource.metadata.title}`);
+        // Hooks
+        player.on(AudioPlayerStatus.Playing, () => {
+          console.log("Audio partito");
         });
+        player.on('error', error => {
+          throw `Error: ${error.message} with resource ${error.resource.metadata.title}`;
+        });
+        player.on(AudioPlayerStatus.Idle, () => {
+          console.log("Audio finito");
+        });
+
+        interaction.deferUpdate();
       } catch (e) {
         console.error("e", e);
       }
