@@ -11,19 +11,10 @@ import { createVoiceConnection } from "../shared/voiceConnectionHandler";
 import { audioFiles } from "..";
 
 export const data = new SlashCommandBuilder()
-  .setName("start")
-  .setDescription("Joins your channel and starts the soundboard.");
+  .setName("list")
+  .setDescription("Arriva la soundboard.");
 
 export async function execute(interaction: CommandInteraction) {
-
-  const target = interaction.options.getUser('target');
-
-  const currVoiceChannel = interaction.member.voice.channel;
-  createVoiceConnection({
-    channelId: currVoiceChannel.id,
-    guildId: currVoiceChannel.guild.id,
-    adapterCreator: currVoiceChannel.guild.voiceAdapterCreator
-  });
 
   // Disconnect button (reply)
   const disconnectBtn = new ButtonBuilder()

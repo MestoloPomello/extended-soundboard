@@ -1,5 +1,11 @@
-import * as start from "./start";
+import * as list from "./list";
+import * as test from "./test";
+import * as join from "./join";
+import * as leave from "./leave";
 
 export const commands = {
-  start
+  join,
+  leave,
+  list,
+  test
 };

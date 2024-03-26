@@ -2,7 +2,8 @@ import {
     CreateVoiceConnectionOptions,
     JoinVoiceChannelOptions,
     VoiceConnection,
-    joinVoiceChannel
+    joinVoiceChannel,
+    getVoiceConnection
 } from "@discordjs/voice";
 
 let voiceConnection: VoiceConnection | undefined;
@@ -14,4 +15,12 @@ export function createVoiceConnection(setupObj: CreateVoiceConnectionOptions & J
 
 export function getExistingVoiceConnection(): VoiceConnection | undefined {
     return voiceConnection;
+}
+
+export function destroyVoiceConnection(guildId: string): boolean {
+    const currVoiceConnection = getVoiceConnection(guildId);
+    if (currVoiceConnection) {
+        currVoiceConnection.destroy();
+        return true;
+    } else return false;
 }
