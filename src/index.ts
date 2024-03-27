@@ -4,7 +4,9 @@ import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { listAudioFiles } from "./drive/fetchAudio";
 import { join } from "node:path";
-import { createReadStream } from "node:fs";
+import express from "express";
+import { engine } from "express-handlebars";
+import path from "path";
 import {
   AudioPlayerStatus,
   NoSubscriberBehavior,
@@ -12,9 +14,9 @@ import {
   createAudioResource,
   getVoiceConnection
 } from "@discordjs/voice";
-import { createVoiceConnection } from "./shared/voiceConnectionHandler";
 
 
+// Global vars
 export let audioFiles: { id: string; name: string; }[] = [];
 
 
@@ -23,10 +25,7 @@ const client = new Client({
 });
 
 client.once("ready", async () => {
-  // TEST ONLY
-  //deployCommands({ guildId: '379286033843617794' });  // server P A
-  deployCommands({ guildId: "357575089799299072" }); // server Ismail
-
+  deployCommands({ guildId: process.env.DEFAULT_GUILD! });
   audioFiles = await listAudioFiles();
   console.log("Extended Soundboard ready.");
 });
@@ -37,7 +36,7 @@ client.on("guildCreate", async (guild) => {
 
 client.on("interactionCreate", async (interaction) => {
 
-  // Commands handlers
+  // Slash commands handlers
   if (interaction.isCommand()) {
     const { commandName } = interaction;
     if (commands[commandName as keyof typeof commands]) {
@@ -47,47 +46,71 @@ client.on("interactionCreate", async (interaction) => {
 
   // Button handlers
   if (interaction.isButton()) {
-    const voiceConnection = getVoiceConnection(interaction.guildId as string) || createVoiceConnection({
-      channelId: interaction.channelId,
-      guildId: interaction.guildId!,
-      adapterCreator: interaction.guild?.voiceAdapterCreator!
-    });
-
     if (interaction.customId == "disconnectBtn") {
-      voiceConnection?.destroy();
+      getVoiceConnection(interaction.guildId as string)?.destroy();
       interaction.reply("Disconnesso dal canale.");
     } else {
-      try {
-        // const URL = `https://www.googleapis.com/drive/v3/files/${interaction.customId}?key=${process.env.GOOGLE_API_KEY}&alt=media`;
-        const path = join(__dirname, '../audio/', interaction.customId);
-        const resource = createAudioResource(path);
-
-        const player = createAudioPlayer({
-          behaviors: {
-            noSubscriber: NoSubscriberBehavior.Play,
-          },
-        });
-
-        voiceConnection?.subscribe(player);
-        player.play(resource);
-
-        // Hooks
-        player.on(AudioPlayerStatus.Playing, () => {
-          console.log("Audio partito: " + interaction.customId);
-        });
-        player.on('error', error => {
-          throw `Error: ${error}`;
-        });
-        player.on(AudioPlayerStatus.Idle, () => {
-          console.log("Audio finito: " + interaction.customId);
-        });
-
-        interaction.deferUpdate();
-      } catch (e) {
-        console.error("e", e);
-      }
+      playAudio(interaction.guildId!, interaction.customId);
+      interaction.deferUpdate();
     }
   }
 });
 
 client.login(config.DISCORD_TOKEN);
+
+
+// Express server
+const app = express();
+
+app.engine("handlebars", engine());
+app.set("view engine", "handlebars");
+app.set("views", path.join(__dirname + '/views'));
+app.get("/", (req, res) => {
+  res.render("index", { audioFiles });
+});
+
+app.get("/api/play", (req, res) => {
+  try {
+    const { guildId, name } = req.query;
+    playAudio(guildId as string, name as string);
+    res.send(true);
+  } catch (e) {
+    console.error("API play - Error:", e);
+    res.send(false);
+  }
+});
+
+app.listen(3000, () => {
+  console.log("Extended Soundboard server started.");
+});
+
+
+// Local functions
+
+async function playAudio(guildId: string, audioName: string): Promise<void> {
+  try {
+    const voiceConnection = getVoiceConnection(guildId as string);
+    const path = join(__dirname, '../audio/', audioName);
+    const resource = createAudioResource(path);
+
+    const player = createAudioPlayer({
+      behaviors: {
+        noSubscriber: NoSubscriberBehavior.Play,
+      },
+    });
+
+    voiceConnection?.subscribe(player);
+    player.play(resource);
+
+    // Hooks
+    player.on(AudioPlayerStatus.Playing, () => {
+      console.log("Audio partito: " + audioName);
+    });
+
+    player.on('error', error => {
+      throw `Error: ${error}`;
+    });
+  } catch (e) {
+    console.error("playAudio - Error:", e);
+  }
+}

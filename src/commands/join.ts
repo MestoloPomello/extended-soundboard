@@ -3,7 +3,7 @@ import {
   SlashCommandBuilder
 } from "discord.js";
 
-import { createVoiceConnection } from "../shared/voiceConnectionHandler";
+import { joinVoiceChannel } from "@discordjs/voice";
 
 export const data = new SlashCommandBuilder()
   .setName("join")
@@ -12,7 +12,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: CommandInteraction) {
   const currVoiceChannel = interaction.member.voice.channel;
   
-  createVoiceConnection({
+  joinVoiceChannel({
     channelId: currVoiceChannel.id,
     guildId: currVoiceChannel.guild.id,
     adapterCreator: currVoiceChannel.guild.voiceAdapterCreator

@@ -3,7 +3,7 @@ import {
   SlashCommandBuilder
 } from "discord.js";
 
-import { destroyVoiceConnection } from "../shared/voiceConnectionHandler";
+import { getVoiceConnection } from "@discordjs/voice";
 
 export const data = new SlashCommandBuilder()
   .setName("leave")
@@ -11,7 +11,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: CommandInteraction) {
   const currVoiceChannel = interaction?.member?.voice.channel;
-  const destroyRes = destroyVoiceConnection(currVoiceChannel.guild.id);
+  const destroyRes = getVoiceConnection(currVoiceChannel.guild.id)?.destroy();
 
   if (destroyRes) {
     interaction.reply({
