@@ -13,9 +13,9 @@ export function createVoiceConnection(setupObj: CreateVoiceConnectionOptions & J
     return voiceConnection;
 }
 
-export function getExistingVoiceConnection(): VoiceConnection | undefined {
-    return voiceConnection;
-}
+// export function getExistingVoiceConnection(guildId: string): VoiceConnection | undefined {
+//     return voiceConnection;
+// }
 
 export function destroyVoiceConnection(guildId: string): boolean {
     const currVoiceConnection = getVoiceConnection(guildId);

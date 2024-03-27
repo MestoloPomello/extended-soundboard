@@ -3,14 +3,16 @@ import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { listAudioFiles } from "./drive/fetchAudio";
-
+import { join } from "node:path";
+import { createReadStream } from "node:fs";
 import {
   AudioPlayerStatus,
   NoSubscriberBehavior,
   createAudioPlayer,
-  createAudioResource
+  createAudioResource,
+  getVoiceConnection
 } from "@discordjs/voice";
-import { createVoiceConnection, getExistingVoiceConnection } from "./shared/voiceConnectionHandler";
+import { createVoiceConnection } from "./shared/voiceConnectionHandler";
 
 
 export let audioFiles: { id: string; name: string; }[] = [];
@@ -45,7 +47,7 @@ client.on("interactionCreate", async (interaction) => {
 
   // Button handlers
   if (interaction.isButton()) {
-    const voiceConnection = getExistingVoiceConnection() || createVoiceConnection({
+    const voiceConnection = getVoiceConnection(interaction.guildId as string) || createVoiceConnection({
       channelId: interaction.channelId,
       guildId: interaction.guildId!,
       adapterCreator: interaction.guild?.voiceAdapterCreator!
@@ -56,8 +58,9 @@ client.on("interactionCreate", async (interaction) => {
       interaction.reply("Disconnesso dal canale.");
     } else {
       try {
-        const URL = `https://www.googleapis.com/drive/v3/files/${interaction.customId}?key=${process.env.GOOGLE_API_KEY}&alt=media`;
-        const resource = createAudioResource(URL);
+        // const URL = `https://www.googleapis.com/drive/v3/files/${interaction.customId}?key=${process.env.GOOGLE_API_KEY}&alt=media`;
+        const path = join(__dirname, '../audio/', interaction.customId);
+        const resource = createAudioResource(path);
 
         const player = createAudioPlayer({
           behaviors: {
@@ -70,13 +73,13 @@ client.on("interactionCreate", async (interaction) => {
 
         // Hooks
         player.on(AudioPlayerStatus.Playing, () => {
-          console.log("Audio partito");
+          console.log("Audio partito: " + interaction.customId);
         });
         player.on('error', error => {
-          throw `Error: ${error.message} with resource ${error.resource.metadata.title}`;
+          throw `Error: ${error}`;
         });
         player.on(AudioPlayerStatus.Idle, () => {
-          console.log("Audio finito");
+          console.log("Audio finito: " + interaction.customId);
         });
 
         interaction.deferUpdate();

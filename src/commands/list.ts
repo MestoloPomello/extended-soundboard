@@ -6,13 +6,11 @@ import {
   SlashCommandBuilder
 } from "discord.js";
 
-import { createVoiceConnection } from "../shared/voiceConnectionHandler";
-
 import { audioFiles } from "..";
 
 export const data = new SlashCommandBuilder()
   .setName("list")
-  .setDescription("Arriva la soundboard.");
+  .setDescription("LA PULSANTIERA");
 
 export async function execute(interaction: CommandInteraction) {
 
@@ -40,7 +38,8 @@ export async function execute(interaction: CommandInteraction) {
 
     for (const audioFile of chunk) {
       const newBtn = new ButtonBuilder()
-        .setCustomId(audioFile.id)
+        // .setCustomId(audioFile.id)
+        .setCustomId(audioFile.name)
         .setLabel(audioFile.name.split(".mp3")[0])
         .setStyle(ButtonStyle.Primary);
       buttonsArray.push(newBtn);

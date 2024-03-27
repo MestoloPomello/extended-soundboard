@@ -5,12 +5,20 @@
  */
 export async function listAudioFiles(): Promise<{ id: string; name: string; }[]> {
     const driveID = process.env.DRIVE_ID;
-    const res = await fetch(`https://www.googleapis.com/drive/v3/files`
-        + `?q=%27${driveID}%27%20in%20parents`
-        + `&key=${process.env.GOOGLE_API_KEY}`,
-        {
-            "method": "GET"
-        });
-    const resJson = await res.json();
-    return resJson.files.map((i: { id: any; name: any; }) => { return { id: i.id, name: i.name }});
+    let fullFiles: any[] = [];
+    let resJson, pageToken;
+    do {
+        const res: any = await fetch(`https://www.googleapis.com/drive/v3/files`
+            + `?q=%27${driveID}%27%20in%20parents`
+            + `&key=${process.env.GOOGLE_API_KEY}`
+            + (pageToken ? `&pageToken=${pageToken}` : ""),
+            {
+                "method": "GET"
+            });
+        resJson = await res.json();
+        fullFiles = fullFiles.concat(resJson.files);
+        pageToken = resJson.nextPageToken;
+    } while (resJson.nextPageToken);
+
+    return fullFiles.map((i: { id: any; name: any; }) => { return { id: i.id, name: i.name } });
 }
