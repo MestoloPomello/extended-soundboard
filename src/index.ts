@@ -3,7 +3,7 @@ import { Client } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
-import { listAudioFiles } from "./drive/audio";
+import { listAudioFiles, updateAudioFiles } from "./drive/audio";
 import { join } from "node:path";
 import express from "express";
 import { engine } from "express-handlebars";
@@ -25,6 +25,7 @@ const client = new Client({
 client.once("ready", async () => {
   deployCommands({ guildId: process.env.DEFAULT_GUILD! });
   await listAudioFiles();
+  await updateAudioFiles();
   console.log("Extended Soundboard ready.");
 });
 
