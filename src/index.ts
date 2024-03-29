@@ -110,6 +110,10 @@ async function playAudio(guildId: string, audioName: string): Promise<void> {
     player.on('error', error => {
       throw `Error: ${error}`;
     });
+
+    voiceConnection?.on('error', error => {
+      throw error;
+    });
   } catch (e) {
     console.error("playAudio - Error:", e);
   }
