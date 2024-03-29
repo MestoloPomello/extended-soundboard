@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
-    "start": "node dist/index.ts",
+    "start": "tsc && dist/index.js",
     "build": "tsup src/index.ts --minify"
   },
   "author": "MestoloPomello",
@@ -19,7 +19,6 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.1",
     "@google-cloud/local-auth": "^2.1.0",
     "@types/express": "^4.17.21",
@@ -32,7 +31,6 @@
     "googleapis": "^105.0.0",
     "libsodium-wrappers": "^0.7.13",
     "mongodb": "^6.5.0",
-    "node-pre-gyp": "^0.17.0",
     "rebuild": "^0.1.2"
   }
 }
