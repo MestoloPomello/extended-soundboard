@@ -10,16 +10,21 @@ export const data = new SlashCommandBuilder()
   .setDescription("Lascia il canale attuale.");
 
 export async function execute(interaction: CommandInteraction) {
-  const currVoiceChannel = interaction?.member?.voice.channel;
-  const destroyRes = getVoiceConnection(currVoiceChannel.guild.id)?.destroy();
+  try {
+    if (!interaction.guildId) throw "questo comando non funziona in privato.";
 
-  if (destroyRes) {
+    const voiceConnection = getVoiceConnection(interaction.guildId);
+
+    if (!voiceConnection) throw "non sono in un canale vocale.";
+    voiceConnection.destroy();
+
     interaction.reply({
-      content: `Abbandonato ${currVoiceChannel.name}.`
+      content: `Ho abbandonato il canale vocale.`
     });
-  } else {
-    interaction.reply({
-      content: `Non sono in un canale vocale.`
+  } catch (error) {
+    console.error("[CMD] Leave error:", error);
+    await interaction.reply({
+      content: `Errore: ${error}`
     });
-  }  
+  }
 }

@@ -3,6 +3,7 @@ import {
   ButtonBuilder,
   ButtonStyle,
   CommandInteraction,
+  GuildMember,
   SlashCommandBuilder,
 } from "discord.js";
 
@@ -13,23 +14,31 @@ export const data = new SlashCommandBuilder()
   .setDescription("Entra nel canale attuale.");
 
 export async function execute(interaction: CommandInteraction) {
-  const currVoiceChannel = interaction.member.voice.channel;
+  try {
+    const currVoiceChannel = (interaction.member! as GuildMember).voice.channel;
+    if (!currVoiceChannel) throw "non sei in un canale vocale.";
 
-  joinVoiceChannel({
-    channelId: currVoiceChannel.id,
-    guildId: currVoiceChannel.guild.id,
-    adapterCreator: currVoiceChannel.guild.voiceAdapterCreator,
-  });
+    joinVoiceChannel({
+      channelId: currVoiceChannel.id,
+      guildId: currVoiceChannel.guild.id,
+      adapterCreator: currVoiceChannel.guild.voiceAdapterCreator,
+    });
 
-  const disconnectBtn = new ButtonBuilder()
-    .setCustomId("disconnectBtn")
-    .setLabel("Disconnetti")
-    .setStyle(ButtonStyle.Danger);
+    const disconnectBtn = new ButtonBuilder()
+      .setCustomId("disconnectBtn")
+      .setLabel("Disconnetti")
+      .setStyle(ButtonStyle.Danger);
 
-  const replyRow = new ActionRowBuilder().addComponents(disconnectBtn);
+    const replyRow = new ActionRowBuilder<ButtonBuilder>().addComponents(disconnectBtn);
 
-  await interaction.reply({
-    content: `Entrato in "${currVoiceChannel.name}".\nSoundboard: ${process.env.DASHBOARD_URL}`,
-    components: [replyRow],
-  });
+    await interaction.reply({
+      content: `Entrato in "${currVoiceChannel.name}".\nSoundboard: ${process.env.DASHBOARD_URL}`,
+      components: [replyRow],
+    });
+  } catch (error) {
+    console.error("[CMD] Join error:", error);
+    await interaction.reply({
+      content: `Errore: ${error}`
+    });
+  }
 }

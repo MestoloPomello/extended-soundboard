@@ -1,12 +1,14 @@
+require('console-stamp')(console, { format: ':date(HH:MM:ss.l)' });
 import { Client } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
-import { listAudioFiles } from "./drive/fetchAudio";
+import { listAudioFiles } from "./drive/audio";
 import { join } from "node:path";
 import express from "express";
 import { engine } from "express-handlebars";
 import path from "path";
+import { audioFiles } from "./drive/audio";
 import {
   AudioPlayerStatus,
   NoSubscriberBehavior,
@@ -16,17 +18,13 @@ import {
 } from "@discordjs/voice";
 
 
-// Global vars
-export let audioFiles: { id: string; name: string; }[] = [];
-
-
 const client = new Client({
   intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
 });
 
 client.once("ready", async () => {
   deployCommands({ guildId: process.env.DEFAULT_GUILD! });
-  audioFiles = await listAudioFiles();
+  await listAudioFiles();
   console.log("Extended Soundboard ready.");
 });
 
