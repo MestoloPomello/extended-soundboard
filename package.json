@@ -6,7 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "tsx watch src/index.ts",
-    "start": "tsc && dist/index.js",
+    "start": "tsc && node dist/index.js",
     "build": "tsup src/index.ts --minify"
   },
   "author": "MestoloPomello",
