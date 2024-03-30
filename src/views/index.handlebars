@@ -1,21 +1,31 @@
 <div class="audio-list">
     {{#each audioFiles}}
-        <button class="audio-item" onclick="playSound(`{{ this.name }}`)"><span class="audio-name">{{ this.formattedName }}</span></button>
+    <button class="audio-item" onclick="playSound(`{{ this.name }}`)"><span class="audio-name">{{ this.formattedName
+            }}</span></button>
     {{/each}}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.matchHeight/0.7.2/jquery.matchHeight-min.js"
+    integrity="sha512-/bOVV1DV1AQXcypckRwsR9ThoCj7FqTV2/0Bm79bL3YSyLkVideFLE3MIZkq1u5t28ke1c0n31WYCOrO01dsUg=="
+    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 <script>
     const guildId = "357575089799299072";
 
     function playSound(audioName) {
-        $.get(`/api/play/?guildId=${guildId}&name=${audioName}`);
-        console.log('Play sound', audioName);
+        $.get(`/api/play/?guildId=${guildId}&name=${audioName}`, function (response) {
+            if (response.status == 200) {
+                console.log(response.message);
+            } else {
+                alert("Errore: " + response.message);
+            }
+        });
     }
-    
+
     const audioItems = document.querySelectorAll('.audio-item');
 
     audioItems.forEach(item => {
@@ -51,4 +61,8 @@
         const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
         return luminance > 0.5; // Return true if light, false if dark
     }
+
+    $(function () {
+        $('.audio-item').matchHeight({ byRow: false });
+    });
 </script>

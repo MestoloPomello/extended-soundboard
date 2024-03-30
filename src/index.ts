@@ -10,9 +10,6 @@ import { engine } from "express-handlebars";
 import path from "path";
 import { audioFiles } from "./drive/audio";
 import {
-  AudioPlayerStatus,
-  NoSubscriberBehavior,
-  createAudioPlayer,
   createAudioResource,
   getVoiceConnection
 } from "@discordjs/voice";
@@ -44,42 +41,41 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   // Button handlers
-  if (interaction.isButton()) {
-    if (interaction.customId == "disconnectBtn") {
-      getVoiceConnection(interaction.guildId as string)?.destroy();
-      interaction.reply("Disconnesso dal canale.");
-    } else {
-      playAudio(interaction.guildId!, interaction.customId);
-      interaction.deferUpdate();
-    }
-  }
+  // if (interaction.isButton()) {
+  //   if (interaction.customId == "disconnectBtn") {
+  //     getVoiceConnection(interaction.guildId as string)?.destroy();
+  //     interaction.reply("Disconnesso dal canale.");
+  //   } else {
+  //     playAudio(interaction.guildId!, interaction.customId);
+  //     interaction.deferUpdate();
+  //   }
+  // }
 });
 
 client.login(config.DISCORD_TOKEN);
 
 
 // Express server
+const PORT = Number(process.env.PORT) || 3000;
 const app = express();
 
 app.engine("handlebars", engine());
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname + '/views'));
 app.get("/", (req, res) => {
-  res.render("index", { audioFiles });
+  res.render("index", { audioFiles: audioFiles.map(e => { return {...e, formattedName: e.name.replace('.mp3', '').replaceAll('_', ' ')}}) });
 });
 
-app.get("/api/play", (req, res) => {
+app.get("/api/play", async (req, res) => {
   try {
     const { guildId, name } = req.query;
-    playAudio(guildId as string, name as string);
-    res.send(true);
+    const playAudioRes = await playAudio(guildId as string, name as string);
+    res.send(playAudioRes);
   } catch (e) {
     console.error("API play - Error:", e);
-    res.send(false);
+    res.send({ status: 500, message: e as string });
   }
 });
-
-const PORT = Number(process.env.PORT) || 3000;
 
 // Railway needs 0.0.0.0
 app.listen(PORT, "0.0.0.0", () => {
@@ -89,7 +85,7 @@ app.listen(PORT, "0.0.0.0", () => {
 
 // Local functions
 
-async function playAudio(guildId: string, audioName: string): Promise<void> {
+async function playAudio(guildId: string, audioName: string): Promise<{ status: number; message: string; }> {
   try {
     // const voiceConnection = getVoiceConnection(guildId as string);
     const path = join(__dirname, '../audio/', audioName);
@@ -99,8 +95,10 @@ async function playAudio(guildId: string, audioName: string): Promise<void> {
 
     player.play(resource);
 
-    console.log("Audio partito: " + audioName);    
+    console.log("Audio partito: " + audioName);
+    return { status: 200, message: "Audio partito." };
   } catch (e) {
     console.error("playAudio - Error:", e);
+    return { status: 500, message: e as string };
   }
 }
