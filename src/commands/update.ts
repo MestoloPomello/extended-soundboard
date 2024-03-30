@@ -2,7 +2,7 @@ import {
   CommandInteraction,
   SlashCommandBuilder
 } from "discord.js";
-import { updateAudioFiles } from "../drive/audio";
+import { listAudioFiles, updateAudioFiles } from "../drive/audio";
 
 
 export const data = new SlashCommandBuilder()
@@ -16,6 +16,7 @@ export async function execute(interaction: CommandInteraction) {
   });
 
   try {
+    await listAudioFiles();
     await updateAudioFiles();
     await interaction.followUp({
       content: `Aggiornamento audio terminato.`
