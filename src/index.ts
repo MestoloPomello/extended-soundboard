@@ -3,7 +3,7 @@ import { Client } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
-import { listAudioFiles, updateAudioFiles } from "./drive/audio";
+import { listAudioFiles, updateAudioFiles, player } from "./drive/audio";
 import { join } from "node:path";
 import express from "express";
 import { engine } from "express-handlebars";
@@ -81,6 +81,7 @@ app.get("/api/play", (req, res) => {
 
 const PORT = Number(process.env.PORT) || 3000;
 
+// Railway needs 0.0.0.0
 app.listen(PORT, "0.0.0.0", () => {
   console.log("Extended Soundboard server started.");
 });
@@ -90,31 +91,15 @@ app.listen(PORT, "0.0.0.0", () => {
 
 async function playAudio(guildId: string, audioName: string): Promise<void> {
   try {
-    const voiceConnection = getVoiceConnection(guildId as string);
+    // const voiceConnection = getVoiceConnection(guildId as string);
     const path = join(__dirname, '../audio/', audioName);
     const resource = createAudioResource(path);
 
-    const player = createAudioPlayer({
-      behaviors: {
-        noSubscriber: NoSubscriberBehavior.Play,
-      },
-    });
+    if (!player) throw "player non istanziato (serve /join)";
 
-    voiceConnection?.subscribe(player);
     player.play(resource);
 
-    // Hooks
-    player.on(AudioPlayerStatus.Playing, () => {
-      console.log("Audio partito: " + audioName);
-    });
-
-    player.on('error', error => {
-      throw error;
-    });
-
-    voiceConnection?.on('error', error => {
-      throw error;
-    });
+    console.log("Audio partito: " + audioName);    
   } catch (e) {
     console.error("playAudio - Error:", e);
   }

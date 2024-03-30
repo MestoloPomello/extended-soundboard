@@ -2,9 +2,32 @@ import fs from "fs";
 import path from "path";
 import { Readable } from "stream";
 import { finished } from "stream/promises";
+import {
+  AudioPlayer,
+  AudioPlayerStatus,
+  NoSubscriberBehavior,
+  createAudioPlayer
+} from "@discordjs/voice";
 
 // Global
 export let audioFiles: { id: string; name: string; }[] = [];
+export let player: AudioPlayer;
+
+export function createPlayer() {
+  player = createAudioPlayer({
+    behaviors: {
+      noSubscriber: NoSubscriberBehavior.Play,
+    },
+  });
+
+  // Hooks
+  player.on('error', error => {
+    throw error;
+  });
+
+  return player;
+}
+
 
 /**
  * Retrieves a list of audio files from the specified Google Drive folder.
@@ -34,7 +57,7 @@ export async function listAudioFiles(): Promise<void> {
 export async function updateAudioFiles() {
   console.log("[AUDIO] Update started");
   for (const audioFile of audioFiles) {
-    try {      
+    try {
       const destination = path.resolve("./audio", audioFile.name);
       if (fs.existsSync(destination)) {
         continue;

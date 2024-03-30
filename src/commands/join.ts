@@ -8,6 +8,7 @@ import {
 } from "discord.js";
 
 import { joinVoiceChannel } from "@discordjs/voice";
+import { createPlayer } from "../drive/audio";
 
 export const data = new SlashCommandBuilder()
   .setName("join")
@@ -18,10 +19,16 @@ export async function execute(interaction: CommandInteraction) {
     const currVoiceChannel = (interaction.member! as GuildMember).voice.channel;
     if (!currVoiceChannel) throw "non sei in un canale vocale.";
 
-    joinVoiceChannel({
+    const voiceConnection = joinVoiceChannel({
       channelId: currVoiceChannel.id,
       guildId: currVoiceChannel.guild.id,
       adapterCreator: currVoiceChannel.guild.voiceAdapterCreator,
+    });
+
+    const newPlayer = createPlayer();
+    voiceConnection.subscribe(newPlayer);
+    voiceConnection.on('error', error => {
+      throw error;
     });
 
     const disconnectBtn = new ButtonBuilder()
