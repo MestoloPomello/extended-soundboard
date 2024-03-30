@@ -1,6 +1,6 @@
 <div class="audio-list">
     {{#each audioFiles}}
-        <button class="audio-item" onclick="playSound(`{{ this.name }}`)"><span class="audio-name">{{ this.name }}</span></button>
+        <button class="audio-item" onclick="playSound(`{{ this.name }}`)"><span class="audio-name">{{ this.formattedName }}</span></button>
     {{/each}}
 </div>
 
