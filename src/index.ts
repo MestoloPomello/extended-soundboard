@@ -1,4 +1,4 @@
-require('console-stamp')(console, { format: ':date(HH:MM:ss.l)' });
+require("console-stamp")(console, { format: ":date(HH:MM:ss.l)" });
 import { Client } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
@@ -9,11 +9,7 @@ import express from "express";
 import { engine } from "express-handlebars";
 import path from "path";
 import { audioFiles } from "./drive/audio";
-import {
-  createAudioResource,
-  getVoiceConnection
-} from "@discordjs/voice";
-
+import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
 
 const client = new Client({
   intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
@@ -31,7 +27,6 @@ client.on("guildCreate", async (guild) => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-
   // Slash commands handlers
   if (interaction.isCommand()) {
     const { commandName } = interaction;
@@ -54,16 +49,28 @@ client.on("interactionCreate", async (interaction) => {
 
 client.login(config.DISCORD_TOKEN);
 
-
 // Express server
 const PORT = Number(process.env.PORT) || 3000;
 const app = express();
 
+app.use(express.static("public"));
+
 app.engine("handlebars", engine());
 app.set("view engine", "handlebars");
-app.set("views", path.join(__dirname + '/views'));
+app.set("views", path.join(__dirname + "/views"));
 app.get("/", (req, res) => {
-  res.render("index", { audioFiles: audioFiles.map(e => { return {...e, formattedName: e.name.replace('.mp3', '').replaceAll('_', ' ')}}) });
+  res.render("index", {
+    audioFiles: audioFiles.map((e) => {
+      return {
+        ...e,
+        formattedName: e.name
+          .toLowerCase()
+          .replace(".m4a", "")
+          .replace(".mp3", "")
+          .replaceAll("_", " "),
+      };
+    }),
+  });
 });
 
 app.get("/api/play", async (req, res) => {
@@ -82,13 +89,15 @@ app.listen(PORT, "0.0.0.0", () => {
   console.log("Extended Soundboard server started.");
 });
 
-
 // Local functions
 
-async function playAudio(guildId: string, audioName: string): Promise<{ status: number; message: string; }> {
+async function playAudio(
+  guildId: string,
+  audioName: string
+): Promise<{ status: number; message: string }> {
   try {
     // const voiceConnection = getVoiceConnection(guildId as string);
-    const path = join(__dirname, '../audio/', audioName);
+    const path = join(__dirname, "../audio/", audioName);
     const resource = createAudioResource(path);
 
     if (!player) throw "player non istanziato (serve /join)";

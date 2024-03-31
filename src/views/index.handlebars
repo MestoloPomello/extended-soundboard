@@ -1,68 +1,34 @@
-<div class="audio-list">
-    {{#each audioFiles}}
-    <button class="audio-item" onclick="playSound(`{{ this.name }}`)"><span class="audio-name">{{ this.formattedName
-            }}</span></button>
-    {{/each}}
+<div id="search">
+  <input type="text" />
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"
-    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.matchHeight/0.7.2/jquery.matchHeight-min.js"
-    integrity="sha512-/bOVV1DV1AQXcypckRwsR9ThoCj7FqTV2/0Bm79bL3YSyLkVideFLE3MIZkq1u5t28ke1c0n31WYCOrO01dsUg=="
-    crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<div class="audio-list">
+  {{#each audioFiles}}
+    <button
+      data-search="{{this.formattedName}}"
+      class="audio-item"
+      onclick="playSound(`{{this.name}}`)"
+    >
+      <span class="audio-name">{{this.formattedName}}</span>
+    </button>
+  {{/each}}
+</div>
 
-<script>
-    const guildId = "357575089799299072";
-
-    function playSound(audioName) {
-        $.get(`/api/play/?guildId=${guildId}&name=${audioName}`, function (response) {
-            if (response.status == 200) {
-                console.log(response.message);
-            } else {
-                alert("Errore: " + response.message);
-            }
-        });
-    }
-
-    const audioItems = document.querySelectorAll('.audio-item');
-
-    audioItems.forEach(item => {
-        const randomEmoji = getRandomEmoji();
-        item.innerHTML = randomEmoji + '<span class="audio-name">' + item.textContent.trim() + '</span>';
-        const randomColor = getRandomColor();
-        item.style.backgroundColor = randomColor;
-        item.style.color = isLightColor(randomColor) ? "#000000" : "#ffffff";
-    });
-
-    function getRandomEmoji() {
-        const minCodePoint = 0x1F600;
-        const maxCodePoint = 0x1F64F;
-        const codePoint = Math.floor(Math.random() * (maxCodePoint - minCodePoint + 1)) + minCodePoint;
-        return String.fromCodePoint(codePoint);
-    }
-
-    function getRandomColor() {
-        const letters = '0123456789ABCDEF';
-        let color = '#';
-        for (let i = 0; i < 6; i++) {
-            color += letters[Math.floor(Math.random() * 16)];
-        }
-        return color;
-    }
-
-    function isLightColor(color) {
-        // Convert hex to RGB
-        const r = parseInt(color.substr(1, 2), 16);
-        const g = parseInt(color.substr(3, 2), 16);
-        const b = parseInt(color.substr(5, 2), 16);
-        // Calculate luminance
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return luminance > 0.5; // Return true if light, false if dark
-    }
-
-    $(function () {
-        $('.audio-item').matchHeight({ byRow: false });
-    });
-</script>
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
+></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"
+></script>
+<script
+  src="https://code.jquery.com/jquery-3.7.1.min.js"
+  integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdnjs.cloudflare.com/ajax/libs/jquery.matchHeight/0.7.2/jquery.matchHeight-min.js"
+  integrity="sha512-/bOVV1DV1AQXcypckRwsR9ThoCj7FqTV2/0Bm79bL3YSyLkVideFLE3MIZkq1u5t28ke1c0n31WYCOrO01dsUg=="
+  crossorigin="anonymous"
+  referrerpolicy="no-referrer"
+></script>
+<script src="js/main.js"></script>
