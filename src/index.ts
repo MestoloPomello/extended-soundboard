@@ -26,6 +26,21 @@ client.on("guildCreate", async (guild) => {
   await deployCommands({ guildId: guild.id });
 });
 
+client.on("voiceStateUpdate", async (oldState, newState) => {
+  const guildId = oldState.guild.id;
+  const myConn = getVoiceConnection(guildId);
+  
+  if (
+    myConn &&
+    !newState.channelId &&
+    myConn.joinConfig.channelId == oldState.channelId &&
+    oldState.channel?.members.size == 1
+  ) {
+    myConn.destroy();
+    console.log("[VOICE] Disconnected from channel because everyone left.");
+  }
+});
+
 client.on("interactionCreate", async (interaction) => {
   // Slash commands handlers
   if (interaction.isCommand()) {
@@ -77,10 +92,10 @@ app.get("/api/play", async (req, res) => {
   try {
     const { guildId, name } = req.query;
     const playAudioRes = await playAudio(guildId as string, name as string);
-    res.send(playAudioRes);
+    res.status(200).send({ status: 200, message: playAudioRes });
   } catch (e) {
     console.error("API play - Error:", e);
-    res.send({ status: 500, message: e as string });
+    res.status(500).send({ status: 500, message: e as string });
   }
 });
 
