@@ -32,8 +32,8 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
   
   if (
     myConn &&
-    !newState.channelId &&
     myConn.joinConfig.channelId == oldState.channelId &&
+    myConn.joinConfig.channelId != newState.channelId &&
     oldState.channel?.members.size == 1
   ) {
     myConn.destroy();
