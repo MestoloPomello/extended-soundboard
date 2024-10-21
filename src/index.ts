@@ -51,15 +51,16 @@ client.on("interactionCreate", async (interaction) => {
   }
 
   // Button handlers
-  // if (interaction.isButton()) {
-  //   if (interaction.customId == "disconnectBtn") {
-  //     getVoiceConnection(interaction.guildId as string)?.destroy();
-  //     interaction.reply("Disconnesso dal canale.");
-  //   } else {
-  //     playAudio(interaction.guildId!, interaction.customId);
-  //     interaction.deferUpdate();
-  //   }
-  // }
+   if (interaction.isButton()) {
+     if (interaction.customId == "disconnectBtn") {
+       getVoiceConnection(interaction.guildId as string)?.destroy();
+       interaction.reply("Disconnesso dal canale.");
+     }
+	 //else {
+	 //     playAudio(interaction.guildId!, interaction.customId);
+	 //     interaction.deferUpdate();
+	 //   }
+   }
 });
 
 client.login(config.DISCORD_TOKEN);
