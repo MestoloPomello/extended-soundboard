@@ -3,22 +3,22 @@ import { Client } from "discord.js";
 import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
-import { listAudioFiles, updateAudioFiles, player } from "./drive/audio";
+import { listAudioFiles, player, updateAudioFiles } from "./mega/audio";
 import { join } from "node:path";
 import express from "express";
 import { engine } from "express-handlebars";
 import path from "path";
-import { audioFiles } from "./drive/audio";
+import { audioFiles } from "./mega/audio";
 import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
 
 const client = new Client({
 	intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
 });
 
-client.once("ready", async () => {
+client.once("clientReady", async () => {
 	deployCommands({ guildId: process.env.DEFAULT_GUILD! });
-	await listAudioFiles();
-	await updateAudioFiles();
+    await updateAudioFiles();
+    await listAudioFiles();
 	console.log("Extended Soundboard ready.");
 });
 

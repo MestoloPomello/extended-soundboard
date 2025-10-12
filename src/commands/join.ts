@@ -8,7 +8,7 @@ import {
 } from "discord.js";
 
 import { joinVoiceChannel } from "@discordjs/voice";
-import { createPlayer } from "../drive/audio";
+import { createPlayer } from "../mega/audio";
 
 export const data = new SlashCommandBuilder()
   .setName("join")
