@@ -22,6 +22,7 @@ export async function execute(interaction: CommandInteraction) {
     const voiceConnection = joinVoiceChannel({
       channelId: currVoiceChannel.id,
       guildId: currVoiceChannel.guild.id,
+      // @ts-ignore
       adapterCreator: currVoiceChannel.guild.voiceAdapterCreator,
     });
 

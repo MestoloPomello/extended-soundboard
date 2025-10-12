@@ -4,7 +4,6 @@ import { config } from "./config";
 import { commands } from "./commands";
 import { deployCommands } from "./deploy-commands";
 import { listAudioFiles, player, updateAudioFiles } from "./mega/audio";
-import { join } from "node:path";
 import express from "express";
 import { engine } from "express-handlebars";
 import path from "path";
@@ -117,8 +116,8 @@ async function playAudio(
 ): Promise<{ status: number; message: string }> {
 	try {
 		// const voiceConnection = getVoiceConnection(guildId as string);
-		const path = join(__dirname, "../audio/", audioName);
-		const resource = createAudioResource(path);
+		const audioPath = path.join(process.cwd(), "audio", audioName);
+		const resource = createAudioResource(audioPath);
 
 		if (!player) throw "player non istanziato (serve /join)";
 
