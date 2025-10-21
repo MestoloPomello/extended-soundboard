@@ -15,6 +15,12 @@ const client = new Client({
 });
 
 client.once("clientReady", async () => {
+
+    client.user!.setPresence({
+        activities: [{ name: 'nudo con Vaporeon', type: 0 }],
+        status: 'online'
+    });
+
 	deployCommands({ guildId: process.env.DEFAULT_GUILD! });
     await updateAudioFiles();
     await listAudioFiles();
