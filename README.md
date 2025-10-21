@@ -8,6 +8,7 @@
 - `DASHBOARD_URL`: the full exposed url for the UI (e.g. http://127.0.0.1:8080)
 - `PORT`: the exposed server port (e.g. 8080)
 - `MEGA_URL`: the URL for the MEGA folder in which the audios are located (put the URL in quotation marks)
+- `OWNER_ID`: the Discord ID for the user who owns the bot (for special commands)
 
 ---
 

@@ -1,14 +1,16 @@
 require("console-stamp")(console, { format: ":date(HH:MM:ss.l)" });
-import { Client } from "discord.js";
-import { config } from "./config";
-import { commands } from "./commands";
-import { deployCommands } from "./deploy-commands";
-import { listAudioFiles, player, updateAudioFiles } from "./mega/audio";
-import express from "express";
-import { engine } from "express-handlebars";
-import path from "path";
-import { audioFiles } from "./mega/audio";
+import { ActivityType, ChatInputCommandInteraction, Client } from "discord.js";
 import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
+import { listAudioFiles, player, updateAudioFiles } from "./mega/audio";
+import { deployCommands } from "./deploy-commands";
+import { STATUS_FILE } from "./commands/status";
+import { engine } from "express-handlebars";
+import { audioFiles } from "./mega/audio";
+import { commands } from "./commands";
+import { config } from "./config";
+import express from "express";
+import path from "path";
+import fs from "fs";
 
 const client = new Client({
 	intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
@@ -16,10 +18,21 @@ const client = new Client({
 
 client.once("clientReady", async () => {
 
-    client.user!.setPresence({
-        activities: [{ name: 'SCOPANDO VAPOREON', type: 4 }],
-        status: 'online'
-    });
+    try {
+        // Status
+        if (fs.existsSync(STATUS_FILE)) {
+            const raw = fs.readFileSync(STATUS_FILE, "utf8");
+            const { status } = JSON.parse(raw);
+            if (status) {
+                client.user?.setPresence({
+                    activities: [{ name: status, type: ActivityType.Playing }],
+                    status: "online",
+                });
+            }
+        }
+    } catch (error) {
+        console.error("Errore durante il ripristino dello stato:", error);
+    }
 
 	deployCommands({ guildId: process.env.DEFAULT_GUILD! });
     await updateAudioFiles();
@@ -51,7 +64,7 @@ client.on("interactionCreate", async (interaction) => {
 	if (interaction.isCommand()) {
 		const { commandName } = interaction;
 		if (commands[commandName as keyof typeof commands]) {
-			commands[commandName as keyof typeof commands].execute(interaction);
+			commands[commandName as keyof typeof commands].execute(interaction as ChatInputCommandInteraction);
 		}
 	}
 
