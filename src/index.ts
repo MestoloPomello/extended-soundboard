@@ -17,7 +17,7 @@ const client = new Client({
 client.once("clientReady", async () => {
 
     client.user!.setPresence({
-        activities: [{ name: 'nudo con Vaporeon', type: 0 }],
+        activities: [{ name: 'SCOPANDO VAPOREON', type: 4 }],
         status: 'online'
     });
 
