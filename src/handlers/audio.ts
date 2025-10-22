@@ -3,7 +3,7 @@ import path from "path";
 import { File } from "megajs";
 
 // Global
-export let audioFiles: { id: string; name: string; }[] = [];
+export let audioFiles: { id: string; name: string; birthtime: Date }[] = [];
 
 /**
  * Lists all the audio files inside the ./audio directory and stores them in the `audioFiles` global variable.
