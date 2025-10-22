@@ -15,7 +15,7 @@ import express from "express";
 import path from "path";
 
 const client = new Client({
-	intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
+    intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
 });
 
 client.once("clientReady", async () => {
@@ -34,51 +34,51 @@ client.once("clientReady", async () => {
 
     await updateAudioFiles();
     await listAudioFiles();
-	console.log("Extended Soundboard ready.");
+    console.log("Extended Soundboard ready.");
 });
 
 client.on("guildCreate", async (guild) => {
     // Add the server to the list (its ID will be used to refresh commands)
-	const guildsArray: SavedGuild[] = loadGuilds();
+    const guildsArray: SavedGuild[] = loadGuilds();
     const newGuild = { id: guild.id, status: "" };
-	guildsArray.push(newGuild);
+    guildsArray.push(newGuild);
     saveGuilds(guildsArray);
     guildSetup({ guildObj: newGuild });
 });
 
 client.on("voiceStateUpdate", async (oldState, newState) => {
-	const guildId = oldState.guild.id;
-	const myConn = getVoiceConnection(guildId);
+    const guildId = oldState.guild.id;
+    const myConn = getVoiceConnection(guildId);
 
-	if (
-		myConn &&
-			myConn.joinConfig.channelId == oldState.channelId &&
-			myConn.joinConfig.channelId != newState.channelId &&
-			oldState.channel?.members.size == 1
-	) {
-		myConn.destroy();
-		console.log("[VOICE] Disconnected from channel because everyone left.");
-	}
+    if (
+        myConn &&
+        myConn.joinConfig.channelId == oldState.channelId &&
+        myConn.joinConfig.channelId != newState.channelId &&
+        oldState.channel?.members.size == 1
+    ) {
+        myConn.destroy();
+        console.log("[VOICE] Disconnected from channel because everyone left.");
+    }
 });
 
 client.on("interactionCreate", async (interaction) => {
-	// Slash commands handlers
-	if (interaction.isCommand()) {
-		const { commandName } = interaction;
-		if (commands[commandName as keyof typeof commands]) {
-			commands[commandName as keyof typeof commands].execute(interaction as ChatInputCommandInteraction);
-		}
-	}
+    // Slash commands handlers
+    if (interaction.isCommand()) {
+        const { commandName } = interaction;
+        if (commands[commandName as keyof typeof commands]) {
+            commands[commandName as keyof typeof commands].execute(interaction as ChatInputCommandInteraction);
+        }
+    }
 
-	// Button handlers
-	if (interaction.isButton()) {
-		if (interaction.customId == "disconnectBtn") {
+    // Button handlers
+    if (interaction.isButton()) {
+        if (interaction.customId == "disconnectBtn") {
             destroyGuildInstance(interaction.guildId as string);
-			interaction.update({
-				components: []
-			});
-		}
-	}
+            interaction.update({
+                components: []
+            });
+        }
+    }
 });
 
 client.login(config.DISCORD_TOKEN);
@@ -89,58 +89,73 @@ const app = express();
 
 app.use(express.static("public"));
 
-app.engine("handlebars", engine());
+app.engine("handlebars", engine({
+    helpers: {
+        eq: (a: string, b: string) => a === b
+    }
+}));
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname + "/views"));
+
 app.get("/", (req, res) => {
-	res.render("index", {
-		audioFiles: audioFiles.map((e) => {
-			return {
-				...e,
-				formattedName: e.name
-				.toLowerCase()
-				.replace(".m4a", "")
-				.replace(".mp3", "")
-				.replaceAll("_", " "),
-			};
-		}),
-	});
+    const sortBy = req.query.sort as string || 'name';
+
+    let sortedFiles = [...audioFiles];
+    if (sortBy === 'date') {
+        sortedFiles.sort((a, b) => b.birthtime.getTime() - a.birthtime.getTime());
+    } else {
+        sortedFiles.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    res.render("index", {
+        audioFiles: sortedFiles.map((e) => {
+            return {
+                ...e,
+                formattedName: e.name
+                    .toLowerCase()
+                    .replace(".m4a", "")
+                    .replace(".mp3", "")
+                    .replaceAll("_", " "),
+            };
+        }),
+        currentSort: sortBy
+    });
 });
 
 app.get("/api/play", async (req, res) => {
-	try {
-		const { guildId, name } = req.query;
-		const playAudioRes = await playAudio(guildId as string, name as string);
-		res.status(200).send({ status: 200, message: playAudioRes });
-	} catch (e) {
-		console.error("API play - Error:", e);
-		res.status(500).send({ status: 500, message: e as string });
-	}
+    try {
+        const { guildId, name } = req.query;
+        const playAudioRes = await playAudio(guildId as string, name as string);
+        res.status(200).send({ status: 200, message: playAudioRes });
+    } catch (e) {
+        console.error("API play - Error:", e);
+        res.status(500).send({ status: 500, message: e as string });
+    }
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-	console.log("Extended Soundboard server started.");
+    console.log("Extended Soundboard server started.");
 });
 
 // Local functions
 
 async function playAudio(
-	guildId: string,
-	audioName: string
+    guildId: string,
+    audioName: string
 ): Promise<{ status: number; message: string }> {
-	try {
-		const audioPath = path.join(process.cwd(), "audio", audioName);
-		const resource = createAudioResource(audioPath);
+    try {
+        const audioPath = path.join(process.cwd(), "audio", audioName);
+        const resource = createAudioResource(audioPath);
 
         const guildInstance = getGuildInstance(guildId, false)!;
-		if (!guildInstance.player) throw "player non istanziato (serve /join)";
+        if (!guildInstance.player) throw "player non istanziato (serve /join)";
 
-		guildInstance.player.play(resource);
+        guildInstance.player.play(resource);
 
-		console.log("[playAudio] Audio partito: " + audioName);
-		return { status: 200, message: "Audio partito." };
-	} catch (e) {
-		console.error("[playAudio] Error:", e);
-		return { status: 500, message: e as string };
-	}
+        console.log("[playAudio] Audio partito: " + audioName);
+        return { status: 200, message: "Audio partito." };
+    } catch (e) {
+        console.error("[playAudio] Error:", e);
+        return { status: 500, message: e as string };
+    }
 }

@@ -21,7 +21,15 @@ export async function listAudioFiles(): Promise<void> {
 
     const files = fs.readdirSync(audioDir, { withFileTypes: true })
         .filter(entry => entry.isFile())
-        .map(entry => ({ id: entry.name, name: entry.name }));
+        .map(entry => {
+            const filePath = path.join(audioDir, entry.name);
+            const stats = fs.statSync(filePath);
+            return {
+                id: entry.name,
+                name: entry.name,
+                birthtime: stats.birthtime
+            };
+        });
 
     audioFiles = files;
 

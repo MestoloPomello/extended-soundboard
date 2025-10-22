@@ -64,3 +64,9 @@ $("#search input").on("input", function () {
         $(".audio-item").show();
     }
 });
+
+function changeSortOrder(sortBy) {
+    const urlParams = new URLSearchParams(window.location.search);
+    urlParams.set('sort', sortBy);
+    window.location.search = urlParams.toString();
+}
