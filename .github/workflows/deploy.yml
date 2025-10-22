@@ -1,35 +1,28 @@
-name: Deploy Extended Soundboard
+name: Deploy on tag
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:
+  push:
+    tags:
+      - '*'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: production
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Deploy to VPS
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.VPS_HOST }}
-        username: ${{ secrets.VPS_USERNAME }}
-        key: ${{ secrets.VPS_SSH_KEY }}
-        port: ${{ secrets.VPS_PORT }}
-        script: |
-          cd extended-soundboard
-          git pull origin main
-          npm install
-          npm run build
-          cp -r src/views dist
-          pm2 restart extended-soundboard || pm2 start dist/index.js --name extended-soundboard
-          pm2 status extended-soundboard
-          sleep 5
-          
-          # Verify if the server is responding
-          curl -f http://localhost:3000 || echo "Warning: Server might not be responding yet"
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Deploy to VPS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT }}
+          script: |
+            cd /path/to/extended-soundboard
+            pm2 stop extended-soundboard || true
+            git fetch --all
+            git reset --hard origin/master
+            pm2 start extended-soundboard
