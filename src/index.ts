@@ -1,16 +1,17 @@
 require("console-stamp")(console, { format: ":date(HH:MM:ss.l)" });
-import { ActivityType, ChatInputCommandInteraction, Client } from "discord.js";
+import { ChatInputCommandInteraction, Client } from "discord.js";
 import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
 import { listAudioFiles, player, updateAudioFiles } from "./mega/audio";
-import { deployCommands } from "./deploy-commands";
-import { STATUS_FILE } from "./commands/status";
+import { guildSetup, loadGuilds, saveGuilds } from "./guild-setup";
+import { existsSync, writeFileSync } from "fs";
+import { GUILDS_LIST_PATH } from "./constants";
 import { engine } from "express-handlebars";
 import { audioFiles } from "./mega/audio";
 import { commands } from "./commands";
+import { SavedGuild } from "./types";
 import { config } from "./config";
 import express from "express";
 import path from "path";
-import fs from "fs";
 
 const client = new Client({
 	intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
@@ -18,30 +19,30 @@ const client = new Client({
 
 client.once("clientReady", async () => {
 
-    try {
-        // Status
-        if (fs.existsSync(STATUS_FILE)) {
-            const raw = fs.readFileSync(STATUS_FILE, "utf8");
-            const { status } = JSON.parse(raw);
-            if (status) {
-                client.user?.setPresence({
-                    activities: [{ name: status, type: ActivityType.Playing }],
-                    status: "online",
-                });
-            }
-        }
-    } catch (error) {
-        console.error("Errore durante il ripristino dello stato:", error);
+    if (!existsSync(GUILDS_LIST_PATH)) {
+        writeFileSync(GUILDS_LIST_PATH, "[]");
     }
+    const guildsArray: SavedGuild[] = loadGuilds();
 
-	deployCommands({ guildId: process.env.DEFAULT_GUILD! });
+    // Guilds setup
+    console.log("[STARTUP] Setting up guilds...");
+    const promisesArray = guildsArray.map(async (guild) => {
+        guildSetup({ guildObj: guild, client });
+    });
+    await Promise.all(promisesArray);
+
     await updateAudioFiles();
     await listAudioFiles();
 	console.log("Extended Soundboard ready.");
 });
 
 client.on("guildCreate", async (guild) => {
-	await deployCommands({ guildId: guild.id });
+    // Add the server to the list (its ID will be used to refresh commands)
+	const guildsArray: SavedGuild[] = loadGuilds();
+    const newGuild = { id: guild.id, status: "" };
+	guildsArray.push(newGuild);
+    saveGuilds(guildsArray);
+    guildSetup({ guildObj: newGuild });
 });
 
 client.on("voiceStateUpdate", async (oldState, newState) => {
@@ -72,16 +73,10 @@ client.on("interactionCreate", async (interaction) => {
 	if (interaction.isButton()) {
 		if (interaction.customId == "disconnectBtn") {
 			getVoiceConnection(interaction.guildId as string)?.destroy();
-			//interaction.reply("Disconnesso dal canale.");
 			interaction.update({
 				components: []
 			});
-
 		}
-		//else {
-		//     playAudio(interaction.guildId!, interaction.customId);
-		//     interaction.deferUpdate();
-		//   }
 	}
 });
 
@@ -134,7 +129,6 @@ async function playAudio(
 	audioName: string
 ): Promise<{ status: number; message: string }> {
 	try {
-		// const voiceConnection = getVoiceConnection(guildId as string);
 		const audioPath = path.join(process.cwd(), "audio", audioName);
 		const resource = createAudioResource(audioPath);
 
@@ -142,10 +136,10 @@ async function playAudio(
 
 		player.play(resource);
 
-		console.log("Audio partito: " + audioName);
+		console.log("[playAudio] Audio partito: " + audioName);
 		return { status: 200, message: "Audio partito." };
 	} catch (e) {
-		console.error("playAudio - Error:", e);
+		console.error("[playAudio] Error:", e);
 		return { status: 500, message: e as string };
 	}
 }

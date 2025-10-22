@@ -2,11 +2,9 @@ import {
     SlashCommandBuilder,
     ActivityType,
     ChatInputCommandInteraction,
+    MessageFlags,
 } from "discord.js";
-import fs from "fs";
-import path from "path";
-
-export const STATUS_FILE = path.join(__dirname, "../../data/status.json");
+import { loadGuilds, saveGuilds } from "../guild-setup";
 
 export const data = new SlashCommandBuilder()
     .setName("status")
@@ -23,7 +21,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         if (interaction.user.id !== process.env.OWNER_ID) {
             await interaction.reply({
                 content: "❌ Solo lo Stefa può usare questo comando!",
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
             return;
         }
@@ -35,24 +33,25 @@ export async function execute(interaction: ChatInputCommandInteraction) {
             status: "online"
         });
 
-        const data = { status };
-        fs.writeFileSync(STATUS_FILE, JSON.stringify(data, null, 2), "utf8");
+        const guilds = loadGuilds();
+        guilds.find((guild) => guild.id == interaction.guildId)!.status = status;
+        saveGuilds(guilds);
 
         await interaction.reply({
             content: `✅ Stato cambiato! Nuovo stato: **${status}**`,
-            ephemeral: true
+                flags: MessageFlags.Ephemeral
         });
     } catch (error) {
         console.error("[SetStatus] Error:", error);
         if (interaction.replied || interaction.deferred) {
             await interaction.followUp({
                 content: `Errore: ${error}`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         } else {
             await interaction.reply({
                 content: `Errore: ${error}`,
-                ephemeral: true
+                flags: MessageFlags.Ephemeral
             });
         }
     }

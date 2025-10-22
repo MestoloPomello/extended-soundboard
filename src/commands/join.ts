@@ -40,7 +40,7 @@ export async function execute(interaction: CommandInteraction) {
     const replyRow = new ActionRowBuilder<ButtonBuilder>().addComponents(disconnectBtn);
 
     await interaction.reply({
-      content: `Entrato in "${currVoiceChannel.name}".\nSoundboard: ${process.env.DASHBOARD_URL}`,
+      content: `Entrato in "${currVoiceChannel.name}".\nSoundboard: ${process.env.DASHBOARD_URL}?guildId=${currVoiceChannel.guild.id}`,
       components: [replyRow],
     });
   } catch (error) {
