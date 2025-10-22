@@ -1,9 +1,9 @@
 import { ActivityType, Client, REST, Routes } from "discord.js";
 import { readFileSync, writeFileSync } from "fs";
-import { GUILDS_LIST_PATH } from "./constants";
-import { commands } from "./commands";
-import { SavedGuild } from "./types";
-import { config } from "./config";
+import { GUILDS_LIST_PATH } from "../constants";
+import { commands } from "../commands";
+import { SavedGuild } from "../types";
+import { config } from "../config";
 
 const commandsData = Object.values(commands).map((command) => command.data);
 const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);

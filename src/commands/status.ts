@@ -4,7 +4,7 @@ import {
     ChatInputCommandInteraction,
     MessageFlags,
 } from "discord.js";
-import { loadGuilds, saveGuilds } from "../guild-setup";
+import { loadGuilds, saveGuilds } from "../handlers/guilds";
 
 export const data = new SlashCommandBuilder()
     .setName("status")

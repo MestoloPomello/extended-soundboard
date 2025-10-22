@@ -7,7 +7,7 @@ import {
     SlashCommandBuilder,
 } from "discord.js";
 import { ActiveGuildInstance } from "../classes/ActiveGuildInstance";
-import { getGuildInstance, getVoiceConnection } from "../connections-handler";
+import { getGuildInstance, getVoiceConnection } from "../handlers/connections";
 
 export const data = new SlashCommandBuilder()
     .setName("join")

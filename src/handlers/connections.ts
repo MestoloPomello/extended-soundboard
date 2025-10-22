@@ -1,5 +1,5 @@
 import { joinVoiceChannel, VoiceConnection } from "@discordjs/voice";
-import { ActiveGuildInstance } from "./classes/ActiveGuildInstance";
+import { ActiveGuildInstance } from "../classes/ActiveGuildInstance";
 import { VoiceBasedChannel } from "discord.js";
 
 export const guildInstances = new Map<string, ActiveGuildInstance>();

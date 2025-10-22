@@ -1,13 +1,13 @@
 require("console-stamp")(console, { format: ":date(HH:MM:ss.l)" });
-import { destroyGuildInstance, getGuildInstance } from "./connections-handler";
+import { destroyGuildInstance, getGuildInstance } from "./handlers/connections";
 import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
-import { guildSetup, loadGuilds, saveGuilds } from "./guild-setup";
+import { guildSetup, loadGuilds, saveGuilds } from "./handlers/guilds";
 import { ChatInputCommandInteraction, Client } from "discord.js";
-import { listAudioFiles, updateAudioFiles } from "./mega/audio";
+import { listAudioFiles, updateAudioFiles } from "./handlers/audio";
 import { existsSync, writeFileSync } from "fs";
 import { GUILDS_LIST_PATH } from "./constants";
 import { engine } from "express-handlebars";
-import { audioFiles } from "./mega/audio";
+import { audioFiles } from "./handlers/audio";
 import { commands } from "./commands";
 import { SavedGuild } from "./types";
 import { config } from "./config";

@@ -2,7 +2,7 @@ import {
     CommandInteraction,
     SlashCommandBuilder
 } from "discord.js";
-import { listAudioFiles, updateAudioFiles } from "../mega/audio";
+import { listAudioFiles, updateAudioFiles } from "../handlers/audio";
 
 
 export const data = new SlashCommandBuilder()

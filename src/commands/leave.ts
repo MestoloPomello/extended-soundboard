@@ -3,7 +3,7 @@ import {
     SlashCommandBuilder
 } from "discord.js";
 import { getVoiceConnection } from "@discordjs/voice";
-import { destroyGuildInstance } from "../connections-handler";
+import { destroyGuildInstance } from "../handlers/connections";
 
 export const data = new SlashCommandBuilder()
     .setName("leave")
