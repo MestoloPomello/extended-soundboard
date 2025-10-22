@@ -1,30 +1,9 @@
 import fs from "fs";
 import path from "path";
-import {
-    AudioPlayer,
-    NoSubscriberBehavior,
-    createAudioPlayer
-} from "@discordjs/voice";
 import { File } from "megajs";
 
 // Global
 export let audioFiles: { id: string; name: string; }[] = [];
-export let player: AudioPlayer;
-
-export function createPlayer() {
-    player = createAudioPlayer({
-        behaviors: {
-            noSubscriber: NoSubscriberBehavior.Play,
-        },
-    });
-
-    // Hooks
-    player.on('error', error => {
-        throw error;
-    });
-
-    return player;
-}
 
 /**
  * Lists all the audio files inside the ./audio directory and stores them in the `audioFiles` global variable.

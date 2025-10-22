@@ -1,8 +1,9 @@
 require("console-stamp")(console, { format: ":date(HH:MM:ss.l)" });
-import { ChatInputCommandInteraction, Client } from "discord.js";
+import { destroyGuildInstance, getGuildInstance } from "./connections-handler";
 import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
-import { listAudioFiles, player, updateAudioFiles } from "./mega/audio";
 import { guildSetup, loadGuilds, saveGuilds } from "./guild-setup";
+import { ChatInputCommandInteraction, Client } from "discord.js";
+import { listAudioFiles, updateAudioFiles } from "./mega/audio";
 import { existsSync, writeFileSync } from "fs";
 import { GUILDS_LIST_PATH } from "./constants";
 import { engine } from "express-handlebars";
@@ -72,7 +73,7 @@ client.on("interactionCreate", async (interaction) => {
 	// Button handlers
 	if (interaction.isButton()) {
 		if (interaction.customId == "disconnectBtn") {
-			getVoiceConnection(interaction.guildId as string)?.destroy();
+            destroyGuildInstance(interaction.guildId as string);
 			interaction.update({
 				components: []
 			});
@@ -117,7 +118,6 @@ app.get("/api/play", async (req, res) => {
 	}
 });
 
-// Railway needs 0.0.0.0
 app.listen(PORT, "0.0.0.0", () => {
 	console.log("Extended Soundboard server started.");
 });
@@ -132,9 +132,10 @@ async function playAudio(
 		const audioPath = path.join(process.cwd(), "audio", audioName);
 		const resource = createAudioResource(audioPath);
 
-		if (!player) throw "player non istanziato (serve /join)";
+        const guildInstance = getGuildInstance(guildId, false)!;
+		if (!guildInstance.player) throw "player non istanziato (serve /join)";
 
-		player.play(resource);
+		guildInstance.player.play(resource);
 
 		console.log("[playAudio] Audio partito: " + audioName);
 		return { status: 200, message: "Audio partito." };
