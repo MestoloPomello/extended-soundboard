@@ -56,7 +56,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
         myConn.joinConfig.channelId != newState.channelId &&
         oldState.channel?.members.size == 1
     ) {
-        myConn.destroy();
+        destroyGuildInstance(guildId);
         console.log("[VOICE] Disconnected from channel because everyone left.");
     }
 });
