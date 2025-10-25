@@ -113,9 +113,8 @@ app.get("/", (req, res) => {
                 ...e,
                 formattedName: e.name
                     .toLowerCase()
-                    .replace(".m4a", "")
-                    .replace(".mp3", "")
-                    .replaceAll("_", " "),
+                    .replaceAll("_", " ")
+                    .substring(0, e.name.lastIndexOf("."))
             };
         }),
         currentSort: sortBy
