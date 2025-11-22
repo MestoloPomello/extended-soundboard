@@ -56,41 +56,49 @@ $("#search input").on("input", function () {
     const query = $(this).val().toLowerCase();
     
     if (query) {
+        // Reset: nascondi tutto prima di riapplicare la ricerca
+        $(".author-section").hide();
+        $(".audio-item").hide();
+        
         $(".author-section").each(function() {
             const sectionAuthor = $(this).attr("data-author");
             const matchesAuthor = sectionAuthor && sectionAuthor.toLowerCase().includes(query);
             
             if (matchesAuthor) {
+                // Se l'autore corrisponde, mostra tutti gli audio della sezione
                 $(this).find(".audio-item").show();
                 $(this).show();
             } else {
-                $(this).find(".audio-item").hide();
+                // Altrimenti, cerca nei singoli audio
+                let hasVisibleAudio = false;
                 $(this).find(".audio-item").each(function() {
                     const searchText = $(this).attr("data-search");
-                    if (searchText && searchText.includes(query)) {
+                    const authorsText = $(this).attr("data-authors") || "";
+                    if ((searchText && searchText.includes(query)) || 
+                        (authorsText && authorsText.toLowerCase().includes(query))) {
                         $(this).show();
+                        hasVisibleAudio = true;
                     }
                 });
                 
-                if ($(this).find(".audio-item:visible").length > 0) {
+                // Mostra la sezione solo se ha almeno un audio visibile
+                if (hasVisibleAudio) {
                     $(this).show();
-                } else {
-                    $(this).hide();
                 }
             }
         });
         
+        // Gestisci gli audio senza sezioni (modalità non raggruppata)
         $(".audio-item").each(function() {
             if (!$(this).closest(".author-section").length) {
                 const searchText = $(this).attr("data-search");
                 if (searchText && searchText.includes(query)) {
                     $(this).show();
-                } else {
-                    $(this).hide();
                 }
             }
         });
     } else {
+        // Se la query è vuota, mostra tutto
         $(".audio-item").show();
         $(".author-section").show();
     }

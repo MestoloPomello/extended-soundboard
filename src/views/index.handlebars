@@ -21,15 +21,15 @@
 
 {{#if groupByAuthor}}
     {{#each sections}}
-        <div class="author-section" data-author="{{this.author}}">
+        <div class="author-section collapsed" data-author="{{this.author}}">
             <div class="author-header" onclick="toggleSection(this)">
-                <h2 class="author-name">{{this.author}}</h2>
+                <h2 class="author-name">{{this.author}} <span class="author-count">({{this.count}})</span></h2>
                 <i class="fas fa-chevron-up collapse-icon"></i>
             </div>
             <div class="section-content">
                 <div class="audio-list">
                     {{#each this.files}}
-                    <button data-search="{{this.formattedName}}" data-author="{{this.author}}" class="audio-item" onclick="playSound(`{{this.name}}`)">
+                    <button data-search="{{this.formattedName}}" data-authors="{{#if this.authors}}{{#each this.authors}}{{this}} {{/each}}{{/if}}" class="audio-item" onclick="playSound(`{{this.name}}`)">
                         <span class="audio-name">{{this.formattedName}}</span>
                     </button>
                     {{/each}}

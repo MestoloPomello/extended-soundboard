@@ -99,15 +99,17 @@ app.get("/", (req, res) => {
 
 	const processedFiles = audioFiles.map((e) => {
 		const authorMatch = e.name.match(/^\[(.+?)\]/);
-		const author = authorMatch ? authorMatch[1].toUpperCase() : null;
+		const authors = authorMatch 
+			? authorMatch[1].split(/\s+/).map(a => a.toUpperCase())
+			: null;
 		const nameWithoutExtension = e.name.substring(0, e.name.lastIndexOf("."));
-		const displayName = author 
+		const displayName = authors 
 			? nameWithoutExtension.replace(/^\[.+?\]\s*/, '')
 			: nameWithoutExtension;
 
 		return {
 			...e,
-			author,
+			authors,
 			fullName: nameWithoutExtension.toLowerCase().replaceAll("_", " "),
 			formattedName: displayName.toLowerCase().replaceAll("_", " ")
 		};
@@ -117,11 +119,20 @@ app.get("/", (req, res) => {
 		const grouped = new Map<string, typeof processedFiles>();
 
 		processedFiles.forEach(file => {
-			const authorKey = file.author || 'SENZA AUTORE';
-			if (!grouped.has(authorKey)) {
-				grouped.set(authorKey, []);
+			if (file.authors && file.authors.length > 0) {
+				file.authors.forEach(author => {
+					if (!grouped.has(author)) {
+						grouped.set(author, []);
+					}
+					grouped.get(author)!.push(file);
+				});
+			} else {
+				const authorKey = 'SENZA AUTORE';
+				if (!grouped.has(authorKey)) {
+					grouped.set(authorKey, []);
+				}
+				grouped.get(authorKey)!.push(file);
 			}
-			grouped.get(authorKey)!.push(file);
 		});
 
 		const sections = Array.from(grouped.entries())
@@ -131,7 +142,7 @@ app.get("/", (req, res) => {
 				} else {
 					files.sort((a, b) => a.formattedName.localeCompare(b.formattedName));
 				}
-				return { author, files };
+				return { author, files, count: files.length };
 			})
 			.sort((a, b) => a.author.localeCompare(b.author));
 
