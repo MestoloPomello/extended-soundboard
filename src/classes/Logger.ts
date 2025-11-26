@@ -27,7 +27,7 @@ class Logger {
 		}
 	}
 
-	async output(scope: string, ...args: any[]) {
+	private async output(scope: string, ...args: any[]) {
 		this.rotateIfNeeded();
 		const formatted = util.format(...args);
 		const line = `[${new Date().toLocaleString()}] ${formatted}`;
