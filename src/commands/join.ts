@@ -8,6 +8,7 @@ import {
 } from "discord.js";
 import { ActiveGuildInstance } from "../classes/ActiveGuildInstance";
 import { getGuildInstance, getVoiceConnection } from "../handlers/connections";
+import { logger } from "../classes/Logger";
 
 export const data = new SlashCommandBuilder()
     .setName("join")
@@ -43,7 +44,7 @@ export async function execute(interaction: CommandInteraction) {
             components: [replyRow],
         });
     } catch (error) {
-        console.error("[CMD] Join error:", error);
+		logger.error("Join command error:", error);
         await interaction.reply({
             content: `Errore: ${error}`
         });

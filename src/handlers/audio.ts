@@ -1,6 +1,7 @@
-import fs from "fs";
-import path from "path";
+import { logger } from "../classes/Logger";
 import { File } from "megajs";
+import path from "path";
+import fs from "fs";
 
 // Global
 export let audioFiles: { id: string; name: string; birthtime: Date }[] = [];
@@ -33,7 +34,7 @@ export async function listAudioFiles(): Promise<void> {
 
     audioFiles = files;
 
-    console.log(`[AUDIO] ${audioFiles.length} file trovati in ${audioDir}`);
+    logger.log(`[AUDIO] ${audioFiles.length} file trovati in ${audioDir}`);
 }
 
 /**
@@ -44,7 +45,7 @@ export async function listAudioFiles(): Promise<void> {
  * The function logs a message to the console when it starts and finishes.
  */
 export async function updateAudioFiles() {
-    console.log("[AUDIO] Update started");
+    logger.log("[AUDIO] Update started");
 
     if (!process.env.MEGA_URL) throw "Manca l'URL del MEGA nel .env, porca troia!";
 
@@ -59,7 +60,7 @@ export async function updateAudioFiles() {
     await root.loadAttributes();
 
     if (!root.children || root.children.length === 0) {
-        console.log("[AUDIO] Nessun file trovato nella cartella MEGA");
+        logger.log("[AUDIO] Nessun file trovato nella cartella MEGA");
         return;
     }
 
@@ -85,5 +86,5 @@ export async function updateAudioFiles() {
         }
     }
 
-    console.log("[AUDIO] Update finished");
+    logger.log("[AUDIO] Update finished");
 }

@@ -1,4 +1,3 @@
-require("console-stamp")(console, { format: ":date(HH:MM:ss.l)" });
 import { destroyGuildInstance, getGuildInstance } from "./handlers/connections";
 import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
 import { guildSetup, loadGuilds, saveGuilds } from "./handlers/guilds";
@@ -6,8 +5,9 @@ import { ChatInputCommandInteraction, Client } from "discord.js";
 import { listAudioFiles, updateAudioFiles } from "./handlers/audio";
 import { existsSync, writeFileSync } from "fs";
 import { GUILDS_LIST_PATH } from "./constants";
-import { engine } from "express-handlebars";
 import { audioFiles } from "./handlers/audio";
+import { engine } from "express-handlebars";
+import { logger } from "./classes/Logger";
 import { commands } from "./commands";
 import { SavedGuild } from "./types";
 import { config } from "./config";
@@ -25,7 +25,7 @@ client.once("clientReady", async () => {
 	}
 	const guildsArray: SavedGuild[] = loadGuilds();
 
-	console.log("[STARTUP] Setting up guilds...");
+	logger.log("[STARTUP] Setting up guilds...");
 	const promisesArray = guildsArray.map(async (guild) => {
 		guildSetup({ guildObj: guild, client });
 	});
@@ -33,7 +33,7 @@ client.once("clientReady", async () => {
 
 	await updateAudioFiles();
 	await listAudioFiles();
-	console.log("Extended Soundboard ready.");
+	logger.log("Extended Soundboard ready.");
 });
 
 client.on("guildCreate", async (guild) => {
@@ -55,7 +55,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 		oldState.channel?.members.size == 1
 	) {
 		destroyGuildInstance(guildId);
-		console.log("[VOICE] Disconnected from channel because everyone left.");
+		logger.log("[VOICE] Disconnected from channel because everyone left.");
 	}
 });
 
@@ -173,13 +173,13 @@ app.get("/api/play", async (req, res) => {
 		const playAudioRes = await playAudio(guildId as string, name as string);
 		res.status(200).send({ status: 200, message: playAudioRes });
 	} catch (e) {
-		console.error("API play - Error:", e);
+		logger.error("[/api/play] Error:", e);
 		res.status(500).send({ status: 500, message: e as string });
 	}
 });
 
 app.listen(PORT, "0.0.0.0", () => {
-	console.log("Extended Soundboard server started.");
+	logger.log("Extended Soundboard server started.");
 });
 
 async function playAudio(
@@ -195,10 +195,10 @@ async function playAudio(
 
 		guildInstance.player.play(resource);
 
-		console.log("[playAudio] Audio partito: " + audioName);
+		logger.log("[playAudio] Audio partito: " + audioName);
 		return { status: 200, message: "Audio partito." };
 	} catch (e) {
-		console.error("[playAudio] Error:", e);
+		logger.error("[playAudio] Error:", e);
 		return { status: 500, message: e as string };
 	}
 }

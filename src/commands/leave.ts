@@ -4,6 +4,7 @@ import {
 } from "discord.js";
 import { getVoiceConnection } from "@discordjs/voice";
 import { destroyGuildInstance } from "../handlers/connections";
+import { logger } from "../classes/Logger";
 
 export const data = new SlashCommandBuilder()
     .setName("leave")
@@ -21,7 +22,7 @@ export async function execute(interaction: CommandInteraction) {
             content: `Ho abbandonato il canale vocale.`
         });
     } catch (error) {
-        console.error("[CMD] Leave error:", error);
+        logger.error("Leave command error:", error);
         await interaction.reply({
             content: `Errore: ${error}`
         });

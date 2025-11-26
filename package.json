@@ -22,7 +22,6 @@
     "@discordjs/voice": "^0.19.0",
     "@snazzah/davey": "^0.1.7",
     "@types/express": "^4.17.23",
-    "console-stamp": "^3.1.2",
     "discord.js": "^14.23.2",
     "dotenv": "^16.6.1",
     "express": "^4.21.2",

@@ -3,6 +3,7 @@ import {
     SlashCommandBuilder
 } from "discord.js";
 import { listAudioFiles, updateAudioFiles } from "../handlers/audio";
+import { logger } from "../classes/Logger";
 
 
 export const data = new SlashCommandBuilder()
@@ -22,7 +23,7 @@ export async function execute(interaction: CommandInteraction) {
             content: `Aggiornamento audio terminato.`
         });
     } catch (error) {
-        console.log("[CMD] Update error:", error);
+        logger.error("Update error:", error);
         await interaction.followUp({
             content: `L'aggiornamento è andato a puttane: ${error}`
         });
