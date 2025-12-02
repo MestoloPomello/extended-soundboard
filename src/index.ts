@@ -50,9 +50,9 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 
 	if (
 		myConn &&
-		myConn.joinConfig.channelId == oldState.channelId &&
-		myConn.joinConfig.channelId != newState.channelId &&
-		oldState.channel?.members.size == 1
+			myConn.joinConfig.channelId == oldState.channelId &&
+			myConn.joinConfig.channelId != newState.channelId &&
+			oldState.channel?.members.size == 1
 	) {
 		destroyGuildInstance(guildId);
 		logger.log("[VOICE] Disconnected from channel because everyone left.");
@@ -136,15 +136,15 @@ app.get("/", (req, res) => {
 		});
 
 		const sections = Array.from(grouped.entries())
-			.map(([author, files]) => {
-				if (sortBy === 'date') {
-					files.sort((a, b) => b.birthtime.getTime() - a.birthtime.getTime());
-				} else {
-					files.sort((a, b) => a.formattedName.localeCompare(b.formattedName));
-				}
-				return { author, files, count: files.length };
-			})
-			.sort((a, b) => a.author.localeCompare(b.author));
+		.map(([author, files]) => {
+			if (sortBy === 'date') {
+				files.sort((a, b) => b.birthtime.getTime() - a.birthtime.getTime());
+			} else {
+				files.sort((a, b) => a.formattedName.localeCompare(b.formattedName));
+			}
+			return { author, files, count: files.length };
+		})
+		.sort((a, b) => a.author.localeCompare(b.author));
 
 		res.render("index", {
 			sections,
@@ -188,7 +188,12 @@ async function playAudio(
 ): Promise<{ status: number; message: string }> {
 	try {
 		const audioPath = path.join(process.cwd(), "audio", audioName);
-		const resource = createAudioResource(audioPath);
+
+		const resource = createAudioResource(audioPath, {
+			inlineVolume: true
+		});
+
+		resource.volume?.setVolume(0.5);
 
 		const guildInstance = getGuildInstance(guildId, false)!;
 		if (!guildInstance.player) throw "player non istanziato (serve /join)";
