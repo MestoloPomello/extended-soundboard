@@ -1,56 +1,140 @@
-<div class="admin-container">
-	<div class="admin-header">
-		<h1><i class="fas fa-cog"></i> Pannello di Amministrazione Audio</h1>
-		<a href="/?guildId={{guildId}}" class="btn-back">
-			<i class="fas fa-arrow-left"></i> Torna alla Soundboard
-		</a>
-	</div>
-
-	<div class="admin-controls">
-		<div class="search-box">
-			<i class="fas fa-search"></i>
-			<input type="text" id="admin-search" placeholder="Cerca per nome, autore..." />
+<!-- Login Page -->
+<div id="login-page" class="login-container">
+	<div class="login-card">
+		<div class="login-header">
+			<i class="fas fa-lock"></i>
+			<h1>Pannello Amministrazione</h1>
+			<p>Inserisci la password per accedere</p>
 		</div>
-		<div class="info-box">
-			<span id="total-count">Caricamento...</span>
+		<form class="login-form" onsubmit="handleLogin(event)">
+			<div class="error-message" id="error-message">
+				<i class="fas fa-exclamation-circle"></i>
+				<span>Password errata. Riprova.</span>
+			</div>
+			<div class="form-group">
+				<label for="password">Password</label>
+				<input 
+					type="password" 
+					id="password" 
+					name="password" 
+					placeholder="Inserisci la password"
+					autocomplete="off"
+					required
+				/>
+			</div>
+			<button type="submit" class="btn-login">
+				Accedi
+			</button>
+		</form>
+	</div>
+</div>
+
+<!-- Admin Panel -->
+<div id="admin-panel" style="display: none;">
+	<div class="admin-container">
+		<div class="admin-header">
+			<h1><i class="fas fa-database"></i> Gestione Audio</h1>
+			<div class="header-actions">
+				<a href="/?guildId={{guildId}}" class="btn-back">
+					<i class="fas fa-arrow-left"></i> Soundboard
+				</a>
+				<button class="btn-logout" onclick="handleLogout()">
+					<i class="fas fa-sign-out-alt"></i> Esci
+				</button>
+			</div>
 		</div>
-	</div>
 
-	<div id="loading" class="loading-overlay">
-		<div class="spinner"></div>
-		<p>Caricamento in corso...</p>
-	</div>
+		<div class="admin-controls">
+			<div class="search-box">
+				<i class="fas fa-search"></i>
+				<input type="text" id="admin-search" placeholder="Cerca per nome o autore..." />
+			</div>
+			<div class="info-box">
+				<span id="total-count">Caricamento...</span>
+			</div>
+		</div>
 
-	<div class="table-container">
-		<table class="admin-table">
-			<thead>
-				<tr>
-					<th>Nome File</th>
-					<th>Autori</th>
-					<th>Dimensione</th>
-					<th>Data Creazione</th>
-					<th>Azioni</th>
-				</tr>
-			</thead>
-			<tbody id="files-tbody">
-			</tbody>
-		</table>
-	</div>
+		<div id="loading" class="loading-overlay">
+			<div class="spinner"></div>
+			<p>Operazione in corso...</p>
+		</div>
 
-	<div class="pagination-container">
-		<button id="prev-page" class="btn-pagination" disabled>
-			<i class="fas fa-chevron-left"></i> Precedente
-		</button>
-		<span id="page-info">Pagina 1 di 1</span>
-		<button id="next-page" class="btn-pagination" disabled>
-			Successivo <i class="fas fa-chevron-right"></i>
-		</button>
+		<div class="table-container">
+			<table class="admin-table">
+				<thead>
+					<tr>
+						<th>Nome File</th>
+						<th>Autori</th>
+						<th>Dimensione</th>
+						<th>Data</th>
+						<th>Azioni</th>
+					</tr>
+				</thead>
+				<tbody id="files-tbody">
+					<tr>
+						<td colspan="5" class="empty-state">
+							<i class="fas fa-spinner fa-spin"></i>
+							<p>Caricamento dei file...</p>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+
+		<div class="pagination-container">
+			<button id="prev-page" class="btn-pagination" disabled>
+				<i class="fas fa-chevron-left"></i> Precedente
+			</button>
+			<span id="page-info">Pagina 1 di 1</span>
+			<button id="next-page" class="btn-pagination" disabled>
+				Successivo <i class="fas fa-chevron-right"></i>
+			</button>
+		</div>
 	</div>
 </div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
-	const userId = "{{userId}}";
+	// ===== Authentication =====
+	const ADMIN_PASSWORD = "{{adminPassword}}";
+
+	function checkAuth() {
+		const isAuthenticated = sessionStorage.getItem('adminAuth') === 'true';
+		if (isAuthenticated) {
+			showAdminPanel();
+		}
+	}
+
+	function handleLogin(event) {
+		event.preventDefault();
+		const password = document.getElementById('password').value;
+		const errorMsg = document.getElementById('error-message');
+
+		if (password === ADMIN_PASSWORD) {
+			sessionStorage.setItem('adminAuth', 'true');
+			errorMsg.classList.remove('show');
+			showAdminPanel();
+		} else {
+			errorMsg.classList.add('show');
+			document.getElementById('password').value = '';
+			document.getElementById('password').focus();
+		}
+	}
+
+	function handleLogout() {
+		if (confirm('Sei sicuro di voler uscire?')) {
+			sessionStorage.removeItem('adminAuth');
+			location.reload();
+		}
+	}
+
+	function showAdminPanel() {
+		document.getElementById('login-page').style.display = 'none';
+		document.getElementById('admin-panel').style.display = 'block';
+		loadFiles(1, "");
+	}
+
+	// ===== File Management =====
 	let currentPage = 1;
 	let currentSearch = "";
 	let totalPages = 1;
@@ -59,10 +143,10 @@
 	async function loadFiles(page = 1, search = "") {
 		if (isLoading) return;
 		isLoading = true;
-		$("#loading").show();
+		$("#loading").addClass('show');
 
 		try {
-			const response = await fetch(`/api/admin/files?userId=${userId}&page=${page}&pageSize=50&search=${encodeURIComponent(search)}`);
+			const response = await fetch(`/api/admin/files?page=${page}&pageSize=50&search=${encodeURIComponent(search)}`);
 			
 			if (!response.ok) {
 				throw new Error("Errore nel caricamento dei file");
@@ -77,10 +161,10 @@
 			updateTotalCount(data.total);
 		} catch (error) {
 			console.error("Error loading files:", error);
-			alert("Errore nel caricamento dei file: " + error.message);
+			showError("Errore nel caricamento dei file");
 		} finally {
 			isLoading = false;
-			$("#loading").hide();
+			$("#loading").removeClass('show');
 		}
 	}
 
@@ -91,9 +175,11 @@
 		if (files.length === 0) {
 			tbody.append(`
 				<tr>
-					<td colspan="5" style="text-align: center; padding: 40px;">
-						<i class="fas fa-folder-open" style="font-size: 48px; color: #666; margin-bottom: 10px;"></i>
-						<p>Nessun file trovato</p>
+					<td colspan="5">
+						<div class="empty-state">
+							<i class="fas fa-folder-open"></i>
+							<p>Nessun file trovato</p>
+						</div>
 					</td>
 				</tr>
 			`);
@@ -102,24 +188,40 @@
 
 		files.forEach(file => {
 			const authorsText = file.authors ? file.authors.join(", ") : "N/A";
-			const date = new Date(file.birthtime).toLocaleDateString("it-IT");
+			const date = new Date(file.birthtime).toLocaleDateString("it-IT", {
+				year: 'numeric',
+				month: 'short',
+				day: 'numeric'
+			});
 			
 			const row = $(`
 				<tr>
-					<td class="file-name">
-						<i class="fas fa-file-audio"></i>
-						<span>${escapeHtml(file.displayName)}</span>
+					<td>
+						<div class="file-name">
+							<i class="fas fa-file-audio"></i>
+							<span>${escapeHtml(file.displayName)}</span>
+						</div>
 					</td>
-					<td>${escapeHtml(authorsText)}</td>
-					<td>${file.formattedSize}</td>
-					<td>${date}</td>
-					<td class="actions">
-						<button class="btn-action btn-refresh" onclick="refreshFile('${escapeHtml(file.name)}')" title="Aggiorna da MEGA">
-							<i class="fas fa-sync-alt"></i>
-						</button>
-						<button class="btn-action btn-delete" onclick="deleteFile('${escapeHtml(file.name)}')" title="Elimina (solo locale)">
-							<i class="fas fa-trash"></i>
-						</button>
+					<td class="authors-cell">${escapeHtml(authorsText)}</td>
+					<td class="size-cell">${file.formattedSize}</td>
+					<td class="date-cell">${date}</td>
+					<td>
+						<div class="actions">
+							<button 
+								class="btn-action btn-refresh" 
+								onclick="refreshFile('${escapeHtml(file.name)}')" 
+								title="Aggiorna da MEGA"
+							>
+								<i class="fas fa-sync-alt"></i>
+							</button>
+							<button 
+								class="btn-action btn-delete" 
+								onclick="deleteFile('${escapeHtml(file.name)}')" 
+								title="Elimina locale"
+							>
+								<i class="fas fa-trash"></i>
+							</button>
+						</div>
 					</td>
 				</tr>
 			`);
@@ -134,17 +236,17 @@
 	}
 
 	function updateTotalCount(total) {
-		$("#total-count").text(`Totale: ${total} file`);
+		$("#total-count").text(`${total} file totali`);
 	}
 
 	async function refreshFile(fileName) {
-		if (!confirm(`Vuoi aggiornare "${fileName}" da MEGA?\nIl file locale verrà eliminato e riscaricato.`)) {
+		if (!confirm(`Aggiornare "${fileName}" da MEGA?\n\nIl file locale verrà eliminato e riscaricato.`)) {
 			return;
 		}
 
-		$("#loading").show();
+		$("#loading").addClass('show');
 		try {
-			const response = await fetch(`/api/admin/refresh?userId=${userId}`, {
+			const response = await fetch(`/api/admin/refresh`, {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ fileName })
@@ -156,24 +258,23 @@
 				throw new Error(result.error || "Errore durante l'aggiornamento");
 			}
 
-			alert(result.message);
 			await loadFiles(currentPage, currentSearch);
 		} catch (error) {
 			console.error("Error refreshing file:", error);
-			alert("Errore: " + error.message);
+			showError("Errore: " + error.message);
 		} finally {
-			$("#loading").hide();
+			$("#loading").removeClass('show');
 		}
 	}
 
 	async function deleteFile(fileName) {
-		if (!confirm(`Sei sicuro di voler eliminare "${fileName}"?\nIl file rimarrà su MEGA ma verrà eliminato localmente.`)) {
+		if (!confirm(`Eliminare "${fileName}"?\n\nIl file rimarrà su MEGA ma verrà eliminato localmente.`)) {
 			return;
 		}
 
-		$("#loading").show();
+		$("#loading").addClass('show');
 		try {
-			const response = await fetch(`/api/admin/delete?userId=${userId}`, {
+			const response = await fetch(`/api/admin/delete`, {
 				method: "DELETE",
 				headers: { "Content-Type": "application/json" },
 				body: JSON.stringify({ fileName })
@@ -185,14 +286,17 @@
 				throw new Error(result.error || "Errore durante l'eliminazione");
 			}
 
-			alert(result.message);
 			await loadFiles(currentPage, currentSearch);
 		} catch (error) {
 			console.error("Error deleting file:", error);
-			alert("Errore: " + error.message);
+			showError("Errore: " + error.message);
 		} finally {
-			$("#loading").hide();
+			$("#loading").removeClass('show');
 		}
+	}
+
+	function showError(message) {
+		alert(message);
 	}
 
 	function escapeHtml(text) {
@@ -206,10 +310,11 @@
 		return text.replace(/[&<>"']/g, m => map[m]);
 	}
 
-	// Event listeners
+	// ===== Event Listeners =====
+	let searchTimeout;
 	$("#admin-search").on("input", function() {
-		clearTimeout(window.searchTimeout);
-		window.searchTimeout = setTimeout(() => {
+		clearTimeout(searchTimeout);
+		searchTimeout = setTimeout(() => {
 			currentSearch = $(this).val();
 			loadFiles(1, currentSearch);
 		}, 500);
@@ -227,8 +332,8 @@
 		}
 	});
 
-	// Load initial data
+	// ===== Initialize =====
 	$(document).ready(() => {
-		loadFiles(1, "");
+		checkAuth();
 	});
 </script>

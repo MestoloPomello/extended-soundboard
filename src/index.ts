@@ -86,6 +86,8 @@ client.on("interactionCreate", async (interaction) => {
 client.login(config.DISCORD_TOKEN);
 
 const PORT = Number(process.env.PORT) || 3000;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
+
 const app = express();
 
 app.use(express.static("public"));
@@ -173,11 +175,11 @@ app.get("/", (req, res) => {
 	}
 });
 
-// ADMIN PANEL CMDS
+// ADMIN PANEL
 app.get("/admin", (req, res) => {
-    // TODO - accesso password
 	res.render("admin", {
-		layout: "main"
+		layout: "admin",
+		adminPassword: ADMIN_PASSWORD
 	});
 });
 
@@ -189,7 +191,6 @@ app.get("/api/admin/files", (req, res) => {
 
 		const result = getPaginatedAudioFiles(page, pageSize, search);
 		
-		// Format file sizes
 		const filesWithFormattedSize = result.files.map(f => ({
 			...f,
 			formattedSize: formatFileSize(f.size)

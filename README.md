@@ -8,6 +8,7 @@
 - `PORT`: the exposed server port (e.g. 8080)
 - `MEGA_URL`: the URL for the MEGA folder in which the audios are located (put the URL in quotation marks)
 - `OWNER_ID`: the Discord ID for the user who owns the bot (for special commands)
+- `ADMIN_PASSWORD`: the password used for opening the admin panel.
 
 ---
 
