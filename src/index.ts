@@ -1,3 +1,9 @@
+import { 
+	getPaginatedAudioFiles, 
+	refreshAudioFile, 
+	deleteLocalAudioFile, 
+	formatFileSize 
+} from "./handlers/admin";
 import { destroyGuildInstance, getGuildInstance } from "./handlers/connections";
 import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
 import { guildSetup, loadGuilds, saveGuilds } from "./handlers/guilds";
@@ -167,6 +173,71 @@ app.get("/", (req, res) => {
 	}
 });
 
+// ADMIN PANEL CMDS
+app.get("/admin", (req, res) => {
+    // TODO - accesso password
+	res.render("admin", {
+		layout: "main"
+	});
+});
+
+app.get("/api/admin/files", (req, res) => {
+	try {
+		const page = parseInt(req.query.page as string) || 1;
+		const pageSize = parseInt(req.query.pageSize as string) || 50;
+		const search = (req.query.search as string) || "";
+
+		const result = getPaginatedAudioFiles(page, pageSize, search);
+		
+		// Format file sizes
+		const filesWithFormattedSize = result.files.map(f => ({
+			...f,
+			formattedSize: formatFileSize(f.size)
+		}));
+
+		res.json({
+			...result,
+			files: filesWithFormattedSize
+		});
+	} catch (error) {
+		logger.error("[GET /api/admin/files] Error:", error);
+		res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+	}
+});
+
+app.post("/api/admin/refresh", express.json(), async (req, res) => {
+	try {
+		const { fileName } = req.body;
+		
+		if (!fileName) {
+			return res.status(400).json({ error: "fileName è richiesto" });
+		}
+
+		await refreshAudioFile(fileName);
+		res.json({ success: true, message: `File ${fileName} aggiornato con successo` });
+	} catch (error) {
+		logger.error("[POST /api/admin/refresh] Error:", error);
+		res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+	}
+});
+
+app.delete("/api/admin/delete", express.json(), async (req, res) => {
+	try {
+		const { fileName } = req.body;
+		
+		if (!fileName) {
+			return res.status(400).json({ error: "fileName è richiesto" });
+		}
+
+		await deleteLocalAudioFile(fileName);
+		res.json({ success: true, message: `File ${fileName} eliminato con successo` });
+	} catch (error) {
+		logger.error("[DELETE /api/admin/delete] Error:", error);
+		res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+	}
+});
+
+// AUDIO CMDS
 app.get("/api/play", async (req, res) => {
 	try {
 		const { guildId, name } = req.query;

@@ -1,0 +1,234 @@
+<div class="admin-container">
+	<div class="admin-header">
+		<h1><i class="fas fa-cog"></i> Pannello di Amministrazione Audio</h1>
+		<a href="/?guildId={{guildId}}" class="btn-back">
+			<i class="fas fa-arrow-left"></i> Torna alla Soundboard
+		</a>
+	</div>
+
+	<div class="admin-controls">
+		<div class="search-box">
+			<i class="fas fa-search"></i>
+			<input type="text" id="admin-search" placeholder="Cerca per nome, autore..." />
+		</div>
+		<div class="info-box">
+			<span id="total-count">Caricamento...</span>
+		</div>
+	</div>
+
+	<div id="loading" class="loading-overlay">
+		<div class="spinner"></div>
+		<p>Caricamento in corso...</p>
+	</div>
+
+	<div class="table-container">
+		<table class="admin-table">
+			<thead>
+				<tr>
+					<th>Nome File</th>
+					<th>Autori</th>
+					<th>Dimensione</th>
+					<th>Data Creazione</th>
+					<th>Azioni</th>
+				</tr>
+			</thead>
+			<tbody id="files-tbody">
+			</tbody>
+		</table>
+	</div>
+
+	<div class="pagination-container">
+		<button id="prev-page" class="btn-pagination" disabled>
+			<i class="fas fa-chevron-left"></i> Precedente
+		</button>
+		<span id="page-info">Pagina 1 di 1</span>
+		<button id="next-page" class="btn-pagination" disabled>
+			Successivo <i class="fas fa-chevron-right"></i>
+		</button>
+	</div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script>
+	const userId = "{{userId}}";
+	let currentPage = 1;
+	let currentSearch = "";
+	let totalPages = 1;
+	let isLoading = false;
+
+	async function loadFiles(page = 1, search = "") {
+		if (isLoading) return;
+		isLoading = true;
+		$("#loading").show();
+
+		try {
+			const response = await fetch(`/api/admin/files?userId=${userId}&page=${page}&pageSize=50&search=${encodeURIComponent(search)}`);
+			
+			if (!response.ok) {
+				throw new Error("Errore nel caricamento dei file");
+			}
+
+			const data = await response.json();
+			currentPage = data.page;
+			totalPages = data.totalPages;
+
+			renderTable(data.files);
+			updatePagination(data);
+			updateTotalCount(data.total);
+		} catch (error) {
+			console.error("Error loading files:", error);
+			alert("Errore nel caricamento dei file: " + error.message);
+		} finally {
+			isLoading = false;
+			$("#loading").hide();
+		}
+	}
+
+	function renderTable(files) {
+		const tbody = $("#files-tbody");
+		tbody.empty();
+
+		if (files.length === 0) {
+			tbody.append(`
+				<tr>
+					<td colspan="5" style="text-align: center; padding: 40px;">
+						<i class="fas fa-folder-open" style="font-size: 48px; color: #666; margin-bottom: 10px;"></i>
+						<p>Nessun file trovato</p>
+					</td>
+				</tr>
+			`);
+			return;
+		}
+
+		files.forEach(file => {
+			const authorsText = file.authors ? file.authors.join(", ") : "N/A";
+			const date = new Date(file.birthtime).toLocaleDateString("it-IT");
+			
+			const row = $(`
+				<tr>
+					<td class="file-name">
+						<i class="fas fa-file-audio"></i>
+						<span>${escapeHtml(file.displayName)}</span>
+					</td>
+					<td>${escapeHtml(authorsText)}</td>
+					<td>${file.formattedSize}</td>
+					<td>${date}</td>
+					<td class="actions">
+						<button class="btn-action btn-refresh" onclick="refreshFile('${escapeHtml(file.name)}')" title="Aggiorna da MEGA">
+							<i class="fas fa-sync-alt"></i>
+						</button>
+						<button class="btn-action btn-delete" onclick="deleteFile('${escapeHtml(file.name)}')" title="Elimina (solo locale)">
+							<i class="fas fa-trash"></i>
+						</button>
+					</td>
+				</tr>
+			`);
+			tbody.append(row);
+		});
+	}
+
+	function updatePagination(data) {
+		$("#page-info").text(`Pagina ${data.page} di ${data.totalPages}`);
+		$("#prev-page").prop("disabled", data.page <= 1);
+		$("#next-page").prop("disabled", data.page >= data.totalPages);
+	}
+
+	function updateTotalCount(total) {
+		$("#total-count").text(`Totale: ${total} file`);
+	}
+
+	async function refreshFile(fileName) {
+		if (!confirm(`Vuoi aggiornare "${fileName}" da MEGA?\nIl file locale verrà eliminato e riscaricato.`)) {
+			return;
+		}
+
+		$("#loading").show();
+		try {
+			const response = await fetch(`/api/admin/refresh?userId=${userId}`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ fileName })
+			});
+
+			const result = await response.json();
+			
+			if (!response.ok) {
+				throw new Error(result.error || "Errore durante l'aggiornamento");
+			}
+
+			alert(result.message);
+			await loadFiles(currentPage, currentSearch);
+		} catch (error) {
+			console.error("Error refreshing file:", error);
+			alert("Errore: " + error.message);
+		} finally {
+			$("#loading").hide();
+		}
+	}
+
+	async function deleteFile(fileName) {
+		if (!confirm(`Sei sicuro di voler eliminare "${fileName}"?\nIl file rimarrà su MEGA ma verrà eliminato localmente.`)) {
+			return;
+		}
+
+		$("#loading").show();
+		try {
+			const response = await fetch(`/api/admin/delete?userId=${userId}`, {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ fileName })
+			});
+
+			const result = await response.json();
+			
+			if (!response.ok) {
+				throw new Error(result.error || "Errore durante l'eliminazione");
+			}
+
+			alert(result.message);
+			await loadFiles(currentPage, currentSearch);
+		} catch (error) {
+			console.error("Error deleting file:", error);
+			alert("Errore: " + error.message);
+		} finally {
+			$("#loading").hide();
+		}
+	}
+
+	function escapeHtml(text) {
+		const map = {
+			'&': '&amp;',
+			'<': '&lt;',
+			'>': '&gt;',
+			'"': '&quot;',
+			"'": '&#039;'
+		};
+		return text.replace(/[&<>"']/g, m => map[m]);
+	}
+
+	// Event listeners
+	$("#admin-search").on("input", function() {
+		clearTimeout(window.searchTimeout);
+		window.searchTimeout = setTimeout(() => {
+			currentSearch = $(this).val();
+			loadFiles(1, currentSearch);
+		}, 500);
+	});
+
+	$("#prev-page").on("click", () => {
+		if (currentPage > 1) {
+			loadFiles(currentPage - 1, currentSearch);
+		}
+	});
+
+	$("#next-page").on("click", () => {
+		if (currentPage < totalPages) {
+			loadFiles(currentPage + 1, currentSearch);
+		}
+	});
+
+	// Load initial data
+	$(document).ready(() => {
+		loadFiles(1, "");
+	});
+</script>
