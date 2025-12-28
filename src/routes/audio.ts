@@ -22,6 +22,11 @@ async function playAudio(
 	audioName: string
 ): Promise<{ status: number; message: string }> {
 	try {
+
+        if (!guildId) {
+            throw "manca parametro guildId";
+        }
+
 		const audioPath = path.join(process.cwd(), "audio", audioName);
 
 		const resource = createAudioResource(audioPath, {
@@ -31,7 +36,7 @@ async function playAudio(
 		resource.volume?.setVolume(0.5);
 
 		const guildInstance = getGuildInstance(guildId, false)!;
-		if (!guildInstance.player) throw "player non istanziato (serve /join)";
+		if (!guildInstance?.player) throw "player non istanziato (serve /join)";
 
 		guildInstance.player.play(resource);
 
