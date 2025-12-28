@@ -96,34 +96,57 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
 	// ===== Authentication =====
-	const ADMIN_PASSWORD = "{{adminPassword}}";
-
-	function checkAuth() {
-		const isAuthenticated = sessionStorage.getItem('adminAuth') === 'true';
-		if (isAuthenticated) {
-			showAdminPanel();
+	async function checkAuth() {
+		try {
+			const response = await fetch('/api/admin/check-auth');
+			const data = await response.json();
+			
+			if (data.isAuthenticated) {
+				showAdminPanel();
+			}
+		} catch (error) {
+			console.error('Error checking auth:', error);
 		}
 	}
 
-	function handleLogin(event) {
+	async function handleLogin(event) {
 		event.preventDefault();
 		const password = document.getElementById('password').value;
 		const errorMsg = document.getElementById('error-message');
 
-		if (password === ADMIN_PASSWORD) {
-			sessionStorage.setItem('adminAuth', 'true');
-			errorMsg.classList.remove('show');
-			showAdminPanel();
-		} else {
-			errorMsg.classList.add('show');
-			document.getElementById('password').value = '';
-			document.getElementById('password').focus();
+		try {
+			const response = await fetch('/api/admin/login', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ password })
+			});
+
+			if (response.ok) {
+				errorMsg.classList.remove('show');
+				showAdminPanel();
+			} else {
+				errorMsg.classList.add('show');
+				document.getElementById('password').value = '';
+				document.getElementById('password').focus();
+			}
+		} catch (error) {
+			console.error('Login error:', error);
+			showError('Errore durante il login');
 		}
 	}
 
-	function handleLogout() {
-		if (confirm('Sei sicuro di voler uscire?')) {
-			sessionStorage.removeItem('adminAuth');
+	async function handleLogout() {
+		if (!confirm('Sei sicuro di voler uscire?')) return;
+
+		try {
+			await fetch('/api/admin/logout', {
+				method: 'POST'
+			});
+			location.reload();
+		} catch (error) {
+			console.error('Logout error:', error);
 			location.reload();
 		}
 	}
@@ -149,6 +172,10 @@
 			const response = await fetch(`/api/admin/files?page=${page}&pageSize=50&search=${encodeURIComponent(search)}`);
 			
 			if (!response.ok) {
+				if (response.status === 401) {
+					location.reload();
+					return;
+				}
 				throw new Error("Errore nel caricamento dei file");
 			}
 
@@ -255,6 +282,10 @@
 			const result = await response.json();
 			
 			if (!response.ok) {
+				if (response.status === 401) {
+					location.reload();
+					return;
+				}
 				throw new Error(result.error || "Errore durante l'aggiornamento");
 			}
 
@@ -283,6 +314,10 @@
 			const result = await response.json();
 			
 			if (!response.ok) {
+				if (response.status === 401) {
+					location.reload();
+					return;
+				}
 				throw new Error(result.error || "Errore durante l'eliminazione");
 			}
 

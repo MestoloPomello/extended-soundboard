@@ -17,6 +17,7 @@ import { logger } from "./classes/Logger";
 import { commands } from "./commands";
 import { SavedGuild } from "./types";
 import { config } from "./config";
+import session from "express-session";
 import express from "express";
 import path from "path";
 
@@ -90,7 +91,20 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 const app = express();
 
+app.use(express.json());
 app.use(express.static("public"));
+
+// Session configuration
+app.use(session({
+	secret: process.env.SESSION_SECRET || 'default_secret_aoaoaoao',
+	resave: false,
+	saveUninitialized: false,
+	cookie: {
+		secure: false,
+		httpOnly: true,
+		maxAge: 1000 * 60 * 60 * 24
+	}
+}));
 
 app.engine("handlebars", engine({
 	helpers: {
@@ -100,6 +114,16 @@ app.engine("handlebars", engine({
 }));
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname + "/views"));
+
+// Middleware to check admin authentication
+function requireAdminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
+	// @ts-ignore
+	if (req.session && req.session.isAdmin) {
+		next();
+	} else {
+		res.status(401).json({ error: "Non autenticato" });
+	}
+}
 
 app.get("/", (req, res) => {
 	const sortBy = req.query.sort as string || 'name';
@@ -178,12 +202,48 @@ app.get("/", (req, res) => {
 // ADMIN PANEL
 app.get("/admin", (req, res) => {
 	res.render("admin", {
-		layout: "admin",
-		adminPassword: ADMIN_PASSWORD
+		layout: "admin"
 	});
 });
 
-app.get("/api/admin/files", (req, res) => {
+// Admin login endpoint
+app.post("/api/admin/login", (req, res) => {
+	try {
+		const { password } = req.body;
+		
+		if (password === ADMIN_PASSWORD) {
+			// @ts-ignore
+			req.session.isAdmin = true;
+			res.json({ success: true });
+		} else {
+			res.status(401).json({ error: "Password errata" });
+		}
+	} catch (error) {
+		logger.error("[POST /api/admin/login] Error:", error);
+		res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
+	}
+});
+
+// Admin logout endpoint
+app.post("/api/admin/logout", (req, res) => {
+	// @ts-ignore
+	req.session.destroy((err) => {
+		if (err) {
+			logger.error("[POST /api/admin/logout] Error:", err);
+			res.status(500).json({ error: "Errore durante il logout" });
+		} else {
+			res.json({ success: true });
+		}
+	});
+});
+
+// Check admin auth status
+app.get("/api/admin/check-auth", (req, res) => {
+	// @ts-ignore
+	res.json({ isAuthenticated: !!req.session?.isAdmin });
+});
+
+app.get("/api/admin/files", requireAdminAuth, (req, res) => {
 	try {
 		const page = parseInt(req.query.page as string) || 1;
 		const pageSize = parseInt(req.query.pageSize as string) || 50;
@@ -206,7 +266,7 @@ app.get("/api/admin/files", (req, res) => {
 	}
 });
 
-app.post("/api/admin/refresh", express.json(), async (req, res) => {
+app.post("/api/admin/refresh", requireAdminAuth, async (req, res) => {
 	try {
 		const { fileName } = req.body;
 		
@@ -222,7 +282,7 @@ app.post("/api/admin/refresh", express.json(), async (req, res) => {
 	}
 });
 
-app.delete("/api/admin/delete", express.json(), async (req, res) => {
+app.delete("/api/admin/delete", requireAdminAuth, async (req, res) => {
 	try {
 		const { fileName } = req.body;
 		
