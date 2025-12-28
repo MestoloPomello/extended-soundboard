@@ -1,17 +1,10 @@
-import { 
-	getPaginatedAudioFiles, 
-	refreshAudioFile, 
-	deleteLocalAudioFile, 
-	formatFileSize 
-} from "./handlers/admin";
-import { destroyGuildInstance, getGuildInstance } from "./handlers/connections";
-import { createAudioResource, getVoiceConnection } from "@discordjs/voice";
+import { destroyGuildInstance } from "./handlers/connections";
 import { guildSetup, loadGuilds, saveGuilds } from "./handlers/guilds";
 import { ChatInputCommandInteraction, Client } from "discord.js";
 import { listAudioFiles, updateAudioFiles } from "./handlers/audio";
+import { getVoiceConnection } from "@discordjs/voice";
 import { existsSync, writeFileSync } from "fs";
 import { GUILDS_LIST_PATH } from "./constants";
-import { audioFiles } from "./handlers/audio";
 import { engine } from "express-handlebars";
 import { logger } from "./classes/Logger";
 import { commands } from "./commands";
@@ -20,6 +13,11 @@ import { config } from "./config";
 import session from "express-session";
 import express from "express";
 import path from "path";
+
+// Import routes
+import indexRoutes from "./routes/index";
+import adminRoutes from "./routes/admin";
+import audioRoutes from "./routes/audio";
 
 const client = new Client({
 	intents: ["Guilds", "GuildMessages", "GuildVoiceStates"],
@@ -87,7 +85,6 @@ client.on("interactionCreate", async (interaction) => {
 client.login(config.DISCORD_TOKEN);
 
 const PORT = Number(process.env.PORT) || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "admin123";
 
 const app = express();
 
@@ -96,7 +93,7 @@ app.use(express.static("public"));
 
 // Session configuration
 app.use(session({
-	secret: process.env.SESSION_SECRET || 'default_secret_aoaoaoao',
+	secret: process.env.SESSION_SECRET || 'your-secret-key-change-this',
 	resave: false,
 	saveUninitialized: false,
 	cookie: {
@@ -106,6 +103,7 @@ app.use(session({
 	}
 }));
 
+// View engine configuration
 app.engine("handlebars", engine({
 	helpers: {
 		eq: (a: string, b: string) => a === b,
@@ -115,227 +113,11 @@ app.engine("handlebars", engine({
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname + "/views"));
 
-// Middleware to check admin authentication
-function requireAdminAuth(req: express.Request, res: express.Response, next: express.NextFunction) {
-	// @ts-ignore
-	if (req.session && req.session.isAdmin) {
-		next();
-	} else {
-		res.status(401).json({ error: "Non autenticato" });
-	}
-}
-
-app.get("/", (req, res) => {
-	const sortBy = req.query.sort as string || 'name';
-	const groupByAuthor = req.query.group === 'true';
-
-	const processedFiles = audioFiles.map((e) => {
-		const authorMatch = e.name.match(/^\[(.+?)\]/);
-		const authors = authorMatch 
-			? authorMatch[1].split(/\s+/).map(a => a.toUpperCase())
-			: null;
-		const nameWithoutExtension = e.name.substring(0, e.name.lastIndexOf("."));
-		const displayName = authors 
-			? nameWithoutExtension.replace(/^\[.+?\]\s*/, '')
-			: nameWithoutExtension;
-
-		return {
-			...e,
-			authors,
-			fullName: nameWithoutExtension.toLowerCase().replaceAll("_", " "),
-			formattedName: displayName.toLowerCase().replaceAll("_", " ")
-		};
-	});
-
-	if (groupByAuthor) {
-		const grouped = new Map<string, typeof processedFiles>();
-
-		processedFiles.forEach(file => {
-			if (file.authors && file.authors.length > 0) {
-				file.authors.forEach(author => {
-					if (!grouped.has(author)) {
-						grouped.set(author, []);
-					}
-					grouped.get(author)!.push(file);
-				});
-			} else {
-				const authorKey = 'SENZA AUTORE';
-				if (!grouped.has(authorKey)) {
-					grouped.set(authorKey, []);
-				}
-				grouped.get(authorKey)!.push(file);
-			}
-		});
-
-		const sections = Array.from(grouped.entries())
-		.map(([author, files]) => {
-			if (sortBy === 'date') {
-				files.sort((a, b) => b.birthtime.getTime() - a.birthtime.getTime());
-			} else {
-				files.sort((a, b) => a.formattedName.localeCompare(b.formattedName));
-			}
-			return { author, files, count: files.length };
-		})
-		.sort((a, b) => a.author.localeCompare(b.author));
-
-		res.render("index", {
-			sections,
-			currentSort: sortBy,
-			groupByAuthor: true
-		});
-	} else {
-		let sortedFiles = [...processedFiles];
-		if (sortBy === 'date') {
-			sortedFiles.sort((a, b) => b.birthtime.getTime() - a.birthtime.getTime());
-		} else {
-			sortedFiles.sort((a, b) => a.fullName.localeCompare(b.fullName));
-		}
-
-		res.render("index", {
-			audioFiles: sortedFiles,
-			currentSort: sortBy,
-			groupByAuthor: false
-		});
-	}
-});
-
-// ADMIN PANEL
-app.get("/admin", (req, res) => {
-	res.render("admin", {
-		layout: "admin"
-	});
-});
-
-// Admin login endpoint
-app.post("/api/admin/login", (req, res) => {
-	try {
-		const { password } = req.body;
-		
-		if (password === ADMIN_PASSWORD) {
-			// @ts-ignore
-			req.session.isAdmin = true;
-			res.json({ success: true });
-		} else {
-			res.status(401).json({ error: "Password errata" });
-		}
-	} catch (error) {
-		logger.error("[POST /api/admin/login] Error:", error);
-		res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-	}
-});
-
-// Admin logout endpoint
-app.post("/api/admin/logout", (req, res) => {
-	// @ts-ignore
-	req.session.destroy((err) => {
-		if (err) {
-			logger.error("[POST /api/admin/logout] Error:", err);
-			res.status(500).json({ error: "Errore durante il logout" });
-		} else {
-			res.json({ success: true });
-		}
-	});
-});
-
-// Check admin auth status
-app.get("/api/admin/check-auth", (req, res) => {
-	// @ts-ignore
-	res.json({ isAuthenticated: !!req.session?.isAdmin });
-});
-
-app.get("/api/admin/files", requireAdminAuth, (req, res) => {
-	try {
-		const page = parseInt(req.query.page as string) || 1;
-		const pageSize = parseInt(req.query.pageSize as string) || 50;
-		const search = (req.query.search as string) || "";
-
-		const result = getPaginatedAudioFiles(page, pageSize, search);
-		
-		const filesWithFormattedSize = result.files.map(f => ({
-			...f,
-			formattedSize: formatFileSize(f.size)
-		}));
-
-		res.json({
-			...result,
-			files: filesWithFormattedSize
-		});
-	} catch (error) {
-		logger.error("[GET /api/admin/files] Error:", error);
-		res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-	}
-});
-
-app.post("/api/admin/refresh", requireAdminAuth, async (req, res) => {
-	try {
-		const { fileName } = req.body;
-		
-		if (!fileName) {
-			return res.status(400).json({ error: "fileName è richiesto" });
-		}
-
-		await refreshAudioFile(fileName);
-		res.json({ success: true, message: `File ${fileName} aggiornato con successo` });
-	} catch (error) {
-		logger.error("[POST /api/admin/refresh] Error:", error);
-		res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-	}
-});
-
-app.delete("/api/admin/delete", requireAdminAuth, async (req, res) => {
-	try {
-		const { fileName } = req.body;
-		
-		if (!fileName) {
-			return res.status(400).json({ error: "fileName è richiesto" });
-		}
-
-		await deleteLocalAudioFile(fileName);
-		res.json({ success: true, message: `File ${fileName} eliminato con successo` });
-	} catch (error) {
-		logger.error("[DELETE /api/admin/delete] Error:", error);
-		res.status(500).json({ error: error instanceof Error ? error.message : String(error) });
-	}
-});
-
-// AUDIO CMDS
-app.get("/api/play", async (req, res) => {
-	try {
-		const { guildId, name } = req.query;
-		const playAudioRes = await playAudio(guildId as string, name as string);
-		res.status(200).send({ status: 200, message: playAudioRes });
-	} catch (e) {
-		logger.error("[/api/play] Error:", e);
-		res.status(500).send({ status: 500, message: e as string });
-	}
-});
+// Routes
+app.use("/", indexRoutes);
+app.use("/admin", adminRoutes);
+app.use("/api", audioRoutes);
 
 app.listen(PORT, "0.0.0.0", () => {
 	logger.log("Extended Soundboard server started.");
 });
-
-async function playAudio(
-	guildId: string,
-	audioName: string
-): Promise<{ status: number; message: string }> {
-	try {
-		const audioPath = path.join(process.cwd(), "audio", audioName);
-
-		const resource = createAudioResource(audioPath, {
-			inlineVolume: true
-		});
-
-		resource.volume?.setVolume(0.5);
-
-		const guildInstance = getGuildInstance(guildId, false)!;
-		if (!guildInstance.player) throw "player non istanziato (serve /join)";
-
-		guildInstance.player.play(resource);
-
-		logger.log("[playAudio] Audio partito: " + audioName);
-		return { status: 200, message: "Audio partito." };
-	} catch (e) {
-		logger.error("[playAudio] Error:", e);
-		return { status: 500, message: e as string };
-	}
-}

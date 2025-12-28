@@ -9,6 +9,7 @@
 - `MEGA_URL`: the URL for the MEGA folder in which the audios are located (put the URL in quotation marks)
 - `OWNER_ID`: the Discord ID for the user who owns the bot (for special commands)
 - `ADMIN_PASSWORD`: the password used for opening the admin panel.
+- `SESSION_SECRET`: random secret used to generate session tokens.
 
 ---
 
