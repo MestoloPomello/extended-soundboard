@@ -124,3 +124,10 @@ function toggleSection(headerElement) {
     const section = headerElement.closest('.author-section');
     section.classList.toggle('collapsed');
 }
+
+function goToAdmin(event) {
+    event.preventDefault();
+    const urlParams = new URLSearchParams(window.location.search);
+    const guildId = urlParams.get('guildId') || '';
+    window.location.href = `/admin?guildId=${guildId}`;
+}

@@ -18,7 +18,8 @@ function requireAdminAuth(req: Request, res: Response, next: NextFunction) {
 // Admin panel page
 router.get("/", (req, res) => {
 	res.render("admin", {
-		layout: "admin"
+		layout: "admin",
+        guildId: req.query.guildId as string || ""
 	});
 });
 
