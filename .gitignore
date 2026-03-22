@@ -147,3 +147,4 @@ audio/
 .replit
 replit.nix
 logs/
+.vscode/

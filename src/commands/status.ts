@@ -1,12 +1,12 @@
+import { loadGuilds, saveGuilds } from "../handlers/guilds";
+import { replyOrFollowUp } from "../handlers/interactions";
+import { logger } from "../classes/Logger";
 import {
     SlashCommandBuilder,
     ActivityType,
     ChatInputCommandInteraction,
     MessageFlags,
 } from "discord.js";
-import { loadGuilds, saveGuilds } from "../handlers/guilds";
-import { logger } from "../classes/Logger";
-import { replyOrFollowUp } from "../handlers/interactions";
 
 export const data = new SlashCommandBuilder()
     .setName("status")
@@ -44,7 +44,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
                 flags: MessageFlags.Ephemeral
         });
     } catch (error) {
-		logger.error("Status command error:", error);
+        logger.error("[SetStatus] Error:", error);
         if (interaction.replied || interaction.deferred) {
             await replyOrFollowUp(interaction, {
                 content: `Errore: ${error}`,

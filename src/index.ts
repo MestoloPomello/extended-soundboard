@@ -61,7 +61,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 			remainingHumans == 0
 	) {
 		destroyGuildInstance(guildId);
-		console.log("[VOICE] Disconnected from channel because everyone left.");
+		logger.log("[VOICE] Disconnected from channel because everyone left.");
 	}
 });
 

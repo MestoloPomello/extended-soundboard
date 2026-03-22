@@ -34,7 +34,7 @@ export function destroyGuildInstance(
         guildInstances.delete(guildId);
         logger.log(`[CONN] Instance deleted for guild ${guildId}. Total instances: ${guildInstances.size}`);
     } catch (error: any) {
-        console.trace("[destroyGuildInstance] Error", error);
+        logger.error("[destroyGuildInstance] Error", error);
     }
 }
 
@@ -59,7 +59,7 @@ export function getVoiceConnection(
 		} 
 		return guildInstance.voiceConnection;
 	} catch (error: any) {
-		console.trace("getVoiceConnection error:", error);
+		logger.error("[getVoiceConnection] Error:", error);
 		return null;
 	}
 }

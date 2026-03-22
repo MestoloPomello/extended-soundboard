@@ -1,18 +1,13 @@
-import { ActivityType, Client, REST, Routes } from "discord.js";
+import { ActivityType, REST, Routes } from "discord.js";
+import { GuildSetupInput, SavedGuild } from "../types/guilds";
 import { readFileSync, writeFileSync } from "fs";
 import { GUILDS_LIST_PATH } from "../constants";
 import { commands } from "../commands";
-import { SavedGuild } from "../types";
 import { config } from "../config";
 import { logger } from "../classes/Logger";
 
 const commandsData = Object.values(commands).map((command) => command.data);
 const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
-
-type GuildSetupInput = {
-    guildObj: SavedGuild;
-    client?: Client;
-}
 
 export async function guildSetup({
     guildObj,
