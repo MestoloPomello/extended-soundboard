@@ -9,6 +9,7 @@ import {
 import { ActiveGuildInstance } from "../classes/ActiveGuildInstance";
 import { getGuildInstance, getVoiceConnection } from "../handlers/connections";
 import { logger } from "../classes/Logger";
+import { replyOrFollowUp } from "../handlers/interactions";
 
 export const data = new SlashCommandBuilder()
     .setName("join")
@@ -39,13 +40,13 @@ export async function execute(interaction: CommandInteraction) {
             .setStyle(ButtonStyle.Danger);
 
         const replyRow = new ActionRowBuilder<ButtonBuilder>().addComponents(disconnectBtn);
-        await interaction.reply({
+        await replyOrFollowUp(interaction, {
             content: `Entrato in "${currVoiceChannel.name}".\nSoundboard: ${process.env.DASHBOARD_URL}?guildId=${currVoiceChannel.guild.id}`,
             components: [replyRow],
         });
     } catch (error) {
 		logger.error("Join command error:", error);
-        await interaction.reply({
+        await replyOrFollowUp(interaction, {
             content: `Errore: ${error}`
         });
     }

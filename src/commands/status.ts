@@ -6,6 +6,7 @@ import {
 } from "discord.js";
 import { loadGuilds, saveGuilds } from "../handlers/guilds";
 import { logger } from "../classes/Logger";
+import { replyOrFollowUp } from "../handlers/interactions";
 
 export const data = new SlashCommandBuilder()
     .setName("status")
@@ -20,7 +21,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: ChatInputCommandInteraction) {
     try {
         if (interaction.user.id !== process.env.OWNER_ID) {
-            await interaction.reply({
+            await replyOrFollowUp(interaction, {
                 content: "❌ Solo lo Stefa può usare questo comando!",
                 flags: MessageFlags.Ephemeral
             });
@@ -38,19 +39,19 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         guilds.find((guild) => guild.id == interaction.guildId)!.status = status;
         saveGuilds(guilds);
 
-        await interaction.reply({
+        await replyOrFollowUp(interaction, {
             content: `✅ Stato cambiato! Nuovo stato: **${status}**`,
                 flags: MessageFlags.Ephemeral
         });
     } catch (error) {
 		logger.error("Status command error:", error);
         if (interaction.replied || interaction.deferred) {
-            await interaction.followUp({
+            await replyOrFollowUp(interaction, {
                 content: `Errore: ${error}`,
                 flags: MessageFlags.Ephemeral
             });
         } else {
-            await interaction.reply({
+            await replyOrFollowUp(interaction, {
                 content: `Errore: ${error}`,
                 flags: MessageFlags.Ephemeral
             });
