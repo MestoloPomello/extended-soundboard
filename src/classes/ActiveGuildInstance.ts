@@ -1,4 +1,9 @@
-import { AudioPlayer, createAudioPlayer, NoSubscriberBehavior, VoiceConnection } from "@discordjs/voice";
+import {
+    AudioPlayer,
+    createAudioPlayer,
+    NoSubscriberBehavior,
+    VoiceConnection
+} from "@discordjs/voice";
 
 export class ActiveGuildInstance {
 	public voiceConnection: VoiceConnection | null;
