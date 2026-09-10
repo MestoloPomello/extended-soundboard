@@ -43,7 +43,7 @@ client.once("clientReady", async () => {
 
 client.on("guildCreate", async (guild) => {
 	const guildsArray: SavedGuild[] = loadGuilds();
-	const newGuild = { id: guild.id, status: "" };
+	const newGuild = { id: guild.id, status: "", guildData: {} };
 	guildsArray.push(newGuild);
 	saveGuilds(guildsArray);
 	guildSetup({ guildObj: newGuild });
