@@ -24,4 +24,6 @@ The current configuration works for Debian.
 - `VPS_SSH_KEY`: generated on the VPS
 
 ### Other requirements
+- Node.js v22
 - `npm` and `PM2` installed on the VPS
+- ffmpeg (from npm)
