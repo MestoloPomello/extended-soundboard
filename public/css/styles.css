@@ -11,6 +11,27 @@ body {
     padding: 10px;
 }
 
+.load-more-audio {
+    display: block;
+    margin: 10px auto 30px;
+    padding: 12px 22px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    cursor: pointer;
+}
+
+.load-more-audio:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+#catalog-status {
+    padding: 0 20px 20px;
+    color: rgba(255, 255, 255, 0.6);
+    text-align: center;
+}
+
 .audio-item {
     width: calc(20% - 20px);
     height: calc(20% - 20px);

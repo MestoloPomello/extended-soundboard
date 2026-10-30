@@ -56,8 +56,14 @@ router.get("/", (req, res) => {
 		})
 		.sort((a, b) => a.author.localeCompare(b.author));
 
+		const catalog = sections.flatMap(section => section.files.map(file => ({
+			...file,
+			sectionAuthor: section.author,
+			searchText: `${file.formattedName} ${(file.authors || []).join(" ")} ${section.author}`.toLowerCase()
+		})));
+
 		res.render("index", {
-			sections,
+			catalogJson: JSON.stringify(catalog).replace(/</g, "\\u003c"),
 			currentSort: sortBy,
 			groupByAuthor: true
 		});
@@ -69,8 +75,14 @@ router.get("/", (req, res) => {
 			sortedFiles.sort((a, b) => a.fullName.localeCompare(b.fullName));
 		}
 
+		const catalog = sortedFiles.map(file => ({
+			...file,
+			displayName: file.fullName,
+			searchText: file.fullName.toLowerCase()
+		}));
+
 		res.render("index", {
-			audioFiles: sortedFiles,
+			catalogJson: JSON.stringify(catalog).replace(/</g, "\\u003c"),
 			currentSort: sortBy,
 			groupByAuthor: false
 		});
